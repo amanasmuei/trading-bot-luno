@@ -1,0 +1,60 @@
+# GitHub Pages Configuration for Luno Trading Bot
+
+# Site settings
+title: "Luno Trading Bot"
+description: "Professional automated trading solution for Luno cryptocurrency exchange"
+url: "https://amanasmuei.github.io"
+baseurl: "/trading-bot-luno"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - QUICK_START.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Include files
+include:
+  - _pages
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# SEO settings
+author: "Aman Asmuei"
+twitter:
+  username: amanasmuei
+  card: summary_large_image
+
+social:
+  name: "Luno Trading Bot"
+  links:
+    - https://github.com/amanasmuei/trading-bot-luno
+
+# Google Analytics (optional)
+# google_analytics: UA-XXXXXXXX-X
+
+# Default front matter
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+      author: "Aman Asmuei"
