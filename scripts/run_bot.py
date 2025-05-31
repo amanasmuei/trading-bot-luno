@@ -161,7 +161,7 @@ def main():
     """Main entry point"""
 
     parser = argparse.ArgumentParser(
-        description="XBTMYR Trading Bot - Advanced cryptocurrency trading automation",
+        description="Luno Trading Bot - Advanced cryptocurrency trading automation for multiple pairs",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

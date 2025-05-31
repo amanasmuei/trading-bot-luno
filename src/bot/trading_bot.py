@@ -16,7 +16,12 @@ from dotenv import load_dotenv
 # Ensure environment variables are loaded
 load_dotenv()
 
-from src.config.settings import TradingConfig, TRADING_SIGNALS, TRADING_HOURS
+from src.config.settings import (
+    TradingConfig,
+    TRADING_SIGNALS,
+    TRADING_HOURS,
+    SUPPORTED_PAIRS,
+)
 from src.bot.technical_analysis import TechnicalAnalyzer, TechnicalIndicators
 from src.api.luno_client import LunoAPIClient, TradingPortfolio
 
@@ -34,11 +39,15 @@ logger = logging.getLogger(__name__)
 
 
 class TradingBot:
-    """Advanced cryptocurrency trading bot for XBTMYR"""
+    """Advanced cryptocurrency trading bot for Luno exchange"""
 
     def __init__(self, config: TradingConfig):
         self.config = config
         self.running = False
+
+        # Validate trading pair
+        self._validate_trading_pair()
+
         self.client = LunoAPIClient(config.api_key, config.api_secret)
         self.portfolio = TradingPortfolio(self.client, config)
         self.analyzer = TechnicalAnalyzer(config)
@@ -65,9 +74,26 @@ class TradingBot:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
-        logger.info("Trading Bot initialized")
+        logger.info("Luno Trading Bot initialized")
         logger.info(f"Dry run mode: {config.dry_run}")
         logger.info(f"Trading pair: {config.trading_pair}")
+        logger.info(f"Base currency: {config.base_currency}")
+        logger.info(f"Counter currency: {config.counter_currency}")
+
+    def _validate_trading_pair(self):
+        """Validate that the trading pair is supported"""
+        from src.config.settings import SUPPORTED_PAIRS
+
+        if self.config.trading_pair not in SUPPORTED_PAIRS:
+            supported_list = ", ".join(SUPPORTED_PAIRS.keys())
+            raise ValueError(
+                f"Unsupported trading pair: {self.config.trading_pair}. "
+                f"Supported pairs: {supported_list}"
+            )
+
+        pair_info = SUPPORTED_PAIRS[self.config.trading_pair]
+        logger.info(f"Trading pair validated: {pair_info['name']}")
+        logger.info(f"Minimum volume: {pair_info['min_volume']}")
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals"""

@@ -1,11 +1,36 @@
-# 🚀 XBTMYR Trading Bot
+# 🚀 Luno Trading Bot
 
-An advanced cryptocurrency trading bot for the XBTMYR (Bitcoin/Malaysian Ringgit) pair on the Luno exchange.
+An advanced cryptocurrency trading bot for multiple trading pairs on the Luno exchange. Supports Bitcoin, Ethereum, Litecoin, and Bitcoin Cash across various fiat currencies.
+
+## 🪙 Supported Trading Pairs
+
+### Bitcoin (XBT)
+- **XBTMYR** - Bitcoin/Malaysian Ringgit
+- **XBTZAR** - Bitcoin/South African Rand
+- **XBTEUR** - Bitcoin/Euro
+- **XBTGBP** - Bitcoin/British Pound
+- **XBTNGN** - Bitcoin/Nigerian Naira
+- **XBTUGX** - Bitcoin/Ugandan Shilling
+
+### Ethereum (ETH)
+- **ETHMYR** - Ethereum/Malaysian Ringgit
+- **ETHZAR** - Ethereum/South African Rand
+- **ETHXBT** - Ethereum/Bitcoin
+
+### Litecoin (LTC)
+- **LTCMYR** - Litecoin/Malaysian Ringgit
+- **LTCZAR** - Litecoin/South African Rand
+- **LTCXBT** - Litecoin/Bitcoin
+
+### Bitcoin Cash (BCH)
+- **BCHMYR** - Bitcoin Cash/Malaysian Ringgit
+- **BCHZAR** - Bitcoin Cash/South African Rand
+- **BCHXBT** - Bitcoin Cash/Bitcoin
 
 ## 📁 Project Structure
 
-```
-xbtmyr-trading-bot/
+```text
+luno-trading-bot/
 ├── src/                    # Main source code
 │   ├── bot/               # Core trading bot logic
 │   │   ├── trading_bot.py
@@ -52,7 +77,12 @@ xbtmyr-trading-bot/
 
 4. **Run Bot (Simulation)**
    ```bash
+   # Default (XBTMYR)
    python scripts/run_bot.py --dry-run
+
+   # Specify trading pair
+   python scripts/run_bot.py --dry-run --trading-pair ETHZAR
+   python scripts/run_bot.py --dry-run --trading-pair XBTEUR
    ```
 
 5. **View Dashboard**

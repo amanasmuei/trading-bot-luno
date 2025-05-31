@@ -11,7 +11,7 @@ import plotly.utils
 from threading import Thread
 import logging
 
-from src.config.settings import TradingConfig
+from src.config.settings import TradingConfig, SUPPORTED_PAIRS
 from src.api.luno_client import LunoAPIClient
 
 logger = logging.getLogger(__name__)

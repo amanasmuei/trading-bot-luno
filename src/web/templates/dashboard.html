@@ -1,207 +1,220 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XBTMYR Trading Bot Dashboard</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luno Trading Bot Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .card h3 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        .status-running { background-color: #4CAF50; }
-        .status-stopped { background-color: #f44336; }
-        .price-display {
-            font-size: 2em;
-            font-weight: bold;
-            color: #333;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .trades-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .trade-item {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-            font-size: 0.9em;
-        }
-        .simulated {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-        .chart-container {
-            grid-column: 1 / -1;
-            height: 400px;
-        }
-        .refresh-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            float: right;
-        }
-        .refresh-btn:hover {
-            background: #5a67d8;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .card h3 {
+        margin-top: 0;
+        color: #333;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+      .status-running {
+        background-color: #4caf50;
+      }
+      .status-stopped {
+        background-color: #f44336;
+      }
+      .price-display {
+        font-size: 2em;
+        font-weight: bold;
+        color: #333;
+        text-align: center;
+        margin: 20px 0;
+      }
+      .metric {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .trades-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .trade-item {
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        font-size: 0.9em;
+      }
+      .simulated {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+      }
+      .chart-container {
+        grid-column: 1 / -1;
+        height: 400px;
+      }
+      .refresh-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        float: right;
+      }
+      .refresh-btn:hover {
+        background: #5a67d8;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header">
-        <h1>🚀 XBTMYR Trading Bot Dashboard</h1>
-        <p>Real-time monitoring and performance tracking</p>
+      <h1>🚀 Luno Trading Bot Dashboard</h1>
+      <p>
+        Real-time monitoring and performance tracking for multiple trading pairs
+      </p>
     </div>
 
     <div class="dashboard-grid">
-        <!-- Bot Status -->
-        <div class="card">
-            <h3>Bot Status</h3>
-            <div id="bot-status">
-                <span class="status-indicator status-stopped"></span>
-                <span>Loading...</span>
-            </div>
-            <div id="bot-config"></div>
+      <!-- Bot Status -->
+      <div class="card">
+        <h3>Bot Status</h3>
+        <div id="bot-status">
+          <span class="status-indicator status-stopped"></span>
+          <span>Loading...</span>
         </div>
+        <div id="bot-config"></div>
+      </div>
 
-        <!-- Current Price -->
-        <div class="card">
-            <h3>Current Market</h3>
-            <div class="price-display" id="current-price">Loading...</div>
-            <div id="market-metrics"></div>
-        </div>
+      <!-- Current Price -->
+      <div class="card">
+        <h3>Current Market</h3>
+        <div class="price-display" id="current-price">Loading...</div>
+        <div id="market-metrics"></div>
+      </div>
 
-        <!-- Portfolio -->
-        <div class="card">
-            <h3>Portfolio</h3>
-            <div id="portfolio-data">Loading...</div>
-        </div>
+      <!-- Portfolio -->
+      <div class="card">
+        <h3>Portfolio</h3>
+        <div id="portfolio-data">Loading...</div>
+      </div>
 
-        <!-- Recent Trades -->
-        <div class="card">
-            <h3>Recent Trades</h3>
-            <div class="trades-list" id="recent-trades">Loading...</div>
-        </div>
+      <!-- Recent Trades -->
+      <div class="card">
+        <h3>Recent Trades</h3>
+        <div class="trades-list" id="recent-trades">Loading...</div>
+      </div>
 
-        <!-- Price Chart -->
-        <div class="card chart-container">
-            <h3>
-                Price Chart (7-day)
-                <button class="refresh-btn" onclick="updateChart()">Refresh</button>
-            </h3>
-            <div id="price-chart"></div>
-        </div>
+      <!-- Price Chart -->
+      <div class="card chart-container">
+        <h3>
+          Price Chart (7-day)
+          <button class="refresh-btn" onclick="updateChart()">Refresh</button>
+        </h3>
+        <div id="price-chart"></div>
+      </div>
     </div>
 
     <script>
-        // Auto-refresh every 30 seconds
-        setInterval(updateDashboard, 30000);
-        
-        // Initial load
-        updateDashboard();
-        updateChart();
+      // Auto-refresh every 30 seconds
+      setInterval(updateDashboard, 30000);
 
-        function updateDashboard() {
-            updateBotStatus();
-            updateMarketData();
-            updatePortfolio();
-            updateTrades();
-        }
+      // Initial load
+      updateDashboard();
+      updateChart();
 
-        function updateBotStatus() {
-            fetch('/api/bot_status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const statusEl = document.getElementById('bot-status');
-                        const configEl = document.getElementById('bot-config');
-                        
-                        const status = data.data.running ? 'Running' : 'Stopped';
-                        const statusClass = data.data.running ? 'status-running' : 'status-stopped';
-                        
-                        statusEl.innerHTML = `
+      function updateDashboard() {
+        updateBotStatus();
+        updateMarketData();
+        updatePortfolio();
+        updateTrades();
+      }
+
+      function updateBotStatus() {
+        fetch("/api/bot_status")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const statusEl = document.getElementById("bot-status");
+              const configEl = document.getElementById("bot-config");
+
+              const status = data.data.running ? "Running" : "Stopped";
+              const statusClass = data.data.running
+                ? "status-running"
+                : "status-stopped";
+
+              statusEl.innerHTML = `
                             <span class="status-indicator ${statusClass}"></span>
                             <span>${status}</span>
                         `;
-                        
-                        configEl.innerHTML = `
+
+              configEl.innerHTML = `
                             <div class="metric">
                                 <span>Trading Pair:</span>
                                 <span>${data.data.config.trading_pair}</span>
                             </div>
                             <div class="metric">
                                 <span>Mode:</span>
-                                <span>${data.data.config.dry_run ? 'Simulation' : 'Live'}</span>
+                                <span>${
+                                  data.data.config.dry_run
+                                    ? "Simulation"
+                                    : "Live"
+                                }</span>
                             </div>
                             <div class="metric">
                                 <span>Position Size:</span>
-                                <span>${data.data.config.max_position_size}%</span>
+                                <span>${
+                                  data.data.config.max_position_size
+                                }%</span>
                             </div>
                         `;
-                    }
-                })
-                .catch(error => console.error('Error updating bot status:', error));
-        }
+            }
+          })
+          .catch((error) => console.error("Error updating bot status:", error));
+      }
 
-        function updateMarketData() {
-            fetch('/api/market_data')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const priceEl = document.getElementById('current-price');
-                        const metricsEl = document.getElementById('market-metrics');
-                        
-                        priceEl.textContent = `${data.data.price.toLocaleString()} MYR`;
-                        
-                        metricsEl.innerHTML = `
+      function updateMarketData() {
+        fetch("/api/market_data")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const priceEl = document.getElementById("current-price");
+              const metricsEl = document.getElementById("market-metrics");
+
+              priceEl.textContent = `${data.data.price.toLocaleString()} MYR`;
+
+              metricsEl.innerHTML = `
                             <div class="metric">
                                 <span>Bid:</span>
                                 <span>${data.data.bid.toLocaleString()} MYR</span>
@@ -215,94 +228,102 @@
                                 <span>${data.data.volume.toFixed(2)} BTC</span>
                             </div>
                         `;
-                    }
-                })
-                .catch(error => console.error('Error updating market data:', error));
-        }
+            }
+          })
+          .catch((error) =>
+            console.error("Error updating market data:", error)
+          );
+      }
 
-        function updatePortfolio() {
-            fetch('/api/portfolio')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const portfolioEl = document.getElementById('portfolio-data');
-                        
-                        if (data.data.dry_run) {
-                            portfolioEl.innerHTML = `
+      function updatePortfolio() {
+        fetch("/api/portfolio")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const portfolioEl = document.getElementById("portfolio-data");
+
+              if (data.data.dry_run) {
+                portfolioEl.innerHTML = `
                                 <div style="text-align: center; color: #ffc107;">
                                     <p>🎭 ${data.data.message}</p>
                                 </div>
                             `;
-                        } else {
-                            let html = '';
-                            for (const [currency, balance] of Object.entries(data.data)) {
-                                html += `
+              } else {
+                let html = "";
+                for (const [currency, balance] of Object.entries(data.data)) {
+                  html += `
                                     <div class="metric">
                                         <span>${currency}:</span>
                                         <span>${balance.total.toFixed(6)}</span>
                                     </div>
                                 `;
-                            }
-                            portfolioEl.innerHTML = html;
-                        }
-                    }
-                })
-                .catch(error => console.error('Error updating portfolio:', error));
-        }
+                }
+                portfolioEl.innerHTML = html;
+              }
+            }
+          })
+          .catch((error) => console.error("Error updating portfolio:", error));
+      }
 
-        function updateTrades() {
-            fetch('/api/trades')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const tradesEl = document.getElementById('recent-trades');
-                        
-                        if (data.data.length === 0) {
-                            tradesEl.innerHTML = '<p>No recent trades</p>';
-                        } else {
-                            let html = '';
-                            data.data.forEach(trade => {
-                                const className = trade.simulated ? 'trade-item simulated' : 'trade-item';
-                                html += `
+      function updateTrades() {
+        fetch("/api/trades")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const tradesEl = document.getElementById("recent-trades");
+
+              if (data.data.length === 0) {
+                tradesEl.innerHTML = "<p>No recent trades</p>";
+              } else {
+                let html = "";
+                data.data.forEach((trade) => {
+                  const className = trade.simulated
+                    ? "trade-item simulated"
+                    : "trade-item";
+                  html += `
                                     <div class="${className}">
                                         <div>${trade.timestamp}</div>
                                         <div>${trade.message}</div>
                                     </div>
                                 `;
-                            });
-                            tradesEl.innerHTML = html;
-                        }
-                    }
-                })
-                .catch(error => console.error('Error updating trades:', error));
-        }
+                });
+                tradesEl.innerHTML = html;
+              }
+            }
+          })
+          .catch((error) => console.error("Error updating trades:", error));
+      }
 
-        function updateChart() {
-            fetch('/api/price_chart')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const chartData = [{
-                            x: data.data.timestamps,
-                            y: data.data.prices,
-                            type: 'scatter',
-                            mode: 'lines',
-                            name: 'Price',
-                            line: { color: '#667eea', width: 2 }
-                        }];
+      function updateChart() {
+        fetch("/api/price_chart")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              const chartData = [
+                {
+                  x: data.data.timestamps,
+                  y: data.data.prices,
+                  type: "scatter",
+                  mode: "lines",
+                  name: "Price",
+                  line: { color: "#667eea", width: 2 },
+                },
+              ];
 
-                        const layout = {
-                            title: 'XBTMYR Price Movement',
-                            xaxis: { title: 'Time' },
-                            yaxis: { title: 'Price (MYR)' },
-                            margin: { t: 50, r: 50, b: 50, l: 80 }
-                        };
+              const layout = {
+                title: "XBTMYR Price Movement",
+                xaxis: { title: "Time" },
+                yaxis: { title: "Price (MYR)" },
+                margin: { t: 50, r: 50, b: 50, l: 80 },
+              };
 
-                        Plotly.newPlot('price-chart', chartData, layout, {responsive: true});
-                    }
-                })
-                .catch(error => console.error('Error updating chart:', error));
-        }
+              Plotly.newPlot("price-chart", chartData, layout, {
+                responsive: true,
+              });
+            }
+          })
+          .catch((error) => console.error("Error updating chart:", error));
+      }
     </script>
-</body>
+  </body>
 </html>
