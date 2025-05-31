@@ -1,8 +1,32 @@
-# 🚀 Luno Trading Bot
+# 🤖 Luno Trading Bot - Professional Automated Trading Platform
 
-An advanced cryptocurrency trading bot for multiple trading pairs on the Luno exchange. Supports Bitcoin, Ethereum, Litecoin, and Bitcoin Cash across various fiat currencies.
+[![GitHub stars](https://img.shields.io/github/stars/amanasmuei/trading-bot-luno?style=social)](https://github.com/amanasmuei/trading-bot-luno/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/amanasmuei/trading-bot-luno?style=social)](https://github.com/amanasmuei/trading-bot-luno/network)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/amanasmuei/trading-bot-luno)](https://github.com/amanasmuei/trading-bot-luno/issues)
 
-**🎉 NEW: Super Easy Setup! Get started in under 5 minutes with our new setup tools.**
+> **Enterprise-grade automated trading bot for Luno cryptocurrency exchange**
+> Advanced algorithms • Institutional-level risk management • Real-time market analysis
+
+**🌟 Professional Features:**
+
+- ✅ **15+ Trading Pairs** - Multi-currency support across major cryptocurrencies
+- ✅ **Advanced Risk Management** - Bank-level security and position controls
+- ✅ **Real-Time Analytics** - Live monitoring and performance tracking
+- ✅ **100% Free & Open Source** - No subscription fees or hidden costs
+- ✅ **Easy 5-Minute Setup** - Professional tools made simple
+
+---
+
+## 🌐 **[Live Demo & Documentation](https://amanasmuei.github.io/trading-bot-luno/)**
+
+**Experience the power of professional trading automation:**
+
+- 📊 [Interactive Dashboard Demo](https://amanasmuei.github.io/trading-bot-luno/dashboard-demo.html)
+- 📖 [Complete Documentation](https://amanasmuei.github.io/trading-bot-luno/documentation.html)
+- ⚡ [Quick Setup Guide](https://amanasmuei.github.io/trading-bot-luno/setup.html)
+
+---
 
 ## 🪙 Supported Trading Pairs
 
@@ -111,7 +135,7 @@ python setup_wizard.py
    ```
 
 5. **View Dashboard**
-   Open: http://localhost:5000
+   Open: <http://localhost:5000>
 
 ## 📖 Documentation
 
