@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# XBTMYR Trading Bot Setup Script
+# Luno Trading Bot Setup Script
 # This script helps set up the trading bot environment
 
-echo "🚀 XBTMYR Trading Bot Setup"
+echo "🚀 Luno Trading Bot Setup"
 echo "=================================="
 
 # Check if Python 3 is installed

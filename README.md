@@ -2,6 +2,8 @@
 
 An advanced cryptocurrency trading bot for multiple trading pairs on the Luno exchange. Supports Bitcoin, Ethereum, Litecoin, and Bitcoin Cash across various fiat currencies.
 
+**🎉 NEW: Super Easy Setup! Get started in under 5 minutes with our new setup tools.**
+
 ## 🪙 Supported Trading Pairs
 
 ### Bitcoin (XBT)
@@ -57,7 +59,30 @@ luno-trading-bot/
 └── .env.example
 ```
 
-## 🚀 Quick Start
+## 🚀 Super Easy Setup (New!)
+
+**Get started in under 5 minutes with our new easy setup tools:**
+
+### Option 1: One-Command Install (Easiest!)
+```bash
+python install.py
+```
+
+### Option 2: Interactive Launcher (Recommended)
+```bash
+python launcher.py
+```
+
+### Option 3: Setup Wizard (Advanced)
+```bash
+python setup_wizard.py
+```
+
+**📖 For detailed instructions, see [EASY_SETUP.md](EASY_SETUP.md)**
+
+---
+
+## 🚀 Traditional Quick Start
 
 1. **Setup Environment**
    ```bash
