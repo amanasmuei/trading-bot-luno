@@ -25,15 +25,45 @@ from src.config.settings import (
 from src.bot.technical_analysis import TechnicalAnalyzer, TechnicalIndicators
 from src.api.luno_client import LunoAPIClient, TradingPortfolio
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/trading_bot.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
+# Configure logging with proper error handling
+def setup_logging():
+    """Setup logging with fallback for permission issues"""
+    handlers = [logging.StreamHandler(sys.stdout)]
+
+    # Try to create file handler with proper error handling
+    try:
+        # Ensure logs directory exists
+        import os
+
+        log_dir = "logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+
+        # Set proper permissions on the log file if it exists
+        log_file = os.path.join(log_dir, "trading_bot.log")
+        if os.path.exists(log_file):
+            os.chmod(log_file, 0o666)
+
+        # Create file handler
+        file_handler = logging.FileHandler(log_file)
+        handlers.append(file_handler)
+        print(f"✅ Logging to file: {log_file}")
+
+    except (PermissionError, OSError) as e:
+        print(f"⚠️  Warning: Cannot write to log file: {e}")
+        print("📝 Logging will continue to console only")
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=handlers,
+    )
+
+
+# Setup logging
+setup_logging()
 
 logger = logging.getLogger(__name__)
 

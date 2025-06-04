@@ -18,12 +18,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create logs directory
-RUN mkdir -p logs
+# Create logs directory with proper permissions
+RUN mkdir -p logs && chmod 755 logs
 
 # Create non-root user for security
 RUN useradd -m -u 1000 trader && chown -R trader:trader /app
 USER trader
+
+# Ensure logs directory is writable by the trader user
+RUN chmod 755 logs && touch logs/trading_bot.log && chmod 666 logs/trading_bot.log
 
 # Expose dashboard port
 EXPOSE 5001
