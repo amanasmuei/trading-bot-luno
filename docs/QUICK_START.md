@@ -25,7 +25,7 @@
    ```
 
 5. **View Dashboard**
-   Open: http://localhost:5000
+   Open: http://localhost:5001
 
 ## Commands Reference
 
@@ -105,8 +105,8 @@ tail -f trading_bot.log
 # Try different port
 python3 run_bot.py --dashboard-port 5001
 
-# Check if something is using port 5000
-lsof -i :5000
+# Check if something is using port 5001
+lsof -i :5001
 ```
 
 ### API Errors
@@ -140,7 +140,7 @@ lsof -i :5000
 ### Files to Monitor
 - `trading_bot.log` - All bot activity
 - `trading_report_*.json` - Performance reports
-- Dashboard at http://localhost:5000
+- Dashboard at http://localhost:5001
 
 ## 🎯 Next Steps
 

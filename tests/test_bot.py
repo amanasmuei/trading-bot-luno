@@ -68,12 +68,12 @@ def test_technical_analysis():
 
         # Sample price data
         sample_prices = [
-            450000,
-            455000,
+            450010,
+            455001,
             460000,
             458000,
             462000,
-            465000,
+            465001,
             463000,
             461000,
             459000,
@@ -236,7 +236,7 @@ def main():
         print("\n🚀 Next steps:")
         print("1. Configure your .env file with Luno API credentials")
         print("2. Run: python run_bot.py --dry-run")
-        print("3. Open dashboard at http://localhost:5000")
+        print("3. Open dashboard at http://localhost:5001")
     else:
         print("⚠️  Some tests failed. Please fix issues before running the bot.")
 

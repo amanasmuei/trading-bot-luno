@@ -330,4 +330,4 @@ setInterval(() => {
         const event = events[Math.floor(Math.random() * events.length)];
         showNotification(event, 'info');
     }
-}, 5000);
+}, 5001);

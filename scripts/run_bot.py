@@ -217,8 +217,8 @@ Examples:
     parser.add_argument(
         "--dashboard-port",
         type=int,
-        default=5000,
-        help="Dashboard port (default: 5000)",
+        default=5001,
+        help="Dashboard port (default: 5001)",
     )
 
     args = parser.parse_args()

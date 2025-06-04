@@ -57,7 +57,7 @@ Containerized deployment for production environments.
    python launcher.py
    ```
 
-5. **View your dashboard**: http://localhost:5000
+5. **View your dashboard**: http://localhost:5001
 
 **That's it! Your bot is running! 🎉**
 
@@ -160,8 +160,8 @@ python launcher.py
 ```
 
 ### "Dashboard not loading"
-- Check if something is using port 5000
-- Try: http://127.0.0.1:5000 instead
+- Check if something is using port 5001
+- Try: http://127.0.0.1:5001 instead
 - Restart the bot
 
 ---
@@ -205,7 +205,7 @@ Your bot is working correctly when you see:
 - [ ] ✅ Setup completed without errors
 - [ ] ✅ API credentials validated
 - [ ] ✅ Bot starts in simulation mode
-- [ ] ✅ Dashboard loads at http://localhost:5000
+- [ ] ✅ Dashboard loads at http://localhost:5001
 - [ ] ✅ Current price updates every minute
 - [ ] ✅ Technical indicators display properly
 - [ ] ✅ No error messages in logs
@@ -236,7 +236,7 @@ python launcher.py
 ### Common Issues
 1. **"Module not found"** → Run `python install.py`
 2. **"API error"** → Check your Luno API credentials
-3. **"Port in use"** → Something else is using port 5000
+3. **"Port in use"** → Something else is using port 5001
 4. **"Permission denied"** → Check file permissions
 
 ---

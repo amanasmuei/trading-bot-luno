@@ -135,7 +135,7 @@ python setup_wizard.py
    ```
 
 5. **View Dashboard**
-   Open: <http://localhost:5000>
+   Open: <http://localhost:5001>
 
 ## 📖 Documentation
 

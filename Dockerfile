@@ -26,11 +26,11 @@ RUN useradd -m -u 1000 trader && chown -R trader:trader /app
 USER trader
 
 # Expose dashboard port
-EXPOSE 5000
+EXPOSE 5001
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+    CMD curl -f http://localhost:5001/health || exit 1
 
 # Default command (dry run mode for safety)
 CMD ["python", "scripts/run_bot.py", "--dry-run"]

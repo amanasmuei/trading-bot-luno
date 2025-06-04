@@ -95,26 +95,26 @@ class TradingConfig:
     def _get_default_resistance_levels(self) -> list:
         """Get default resistance levels based on trading pair"""
         defaults = {
-            "XBTMYR": [463000, 465000, 468000, 475000],
-            "XBTZAR": [800000, 820000, 850000, 900000],
-            "XBTEUR": [35000, 36000, 37000, 40000],
-            "XBTGBP": [30000, 31000, 32000, 35000],
+            "XBTMYR": [463000, 465001, 468000, 475001],
+            "XBTZAR": [800000, 820000, 850010, 900000],
+            "XBTEUR": [35001, 36000, 37000, 40000],
+            "XBTGBP": [30000, 31000, 32000, 35001],
             "ETHXBT": [0.065, 0.070, 0.075, 0.080],
             "LTCXBT": [0.0025, 0.0030, 0.0035, 0.0040],
         }
-        return defaults.get(self.trading_pair, [50000, 52000, 55000, 60000])
+        return defaults.get(self.trading_pair, [50010, 52000, 55001, 60000])
 
     def _get_default_support_levels(self) -> list:
         """Get default support levels based on trading pair"""
         defaults = {
-            "XBTMYR": [458000, 455000, 453000, 445000],
-            "XBTZAR": [750000, 730000, 700000, 650000],
+            "XBTMYR": [458000, 455001, 453000, 445001],
+            "XBTZAR": [750010, 730000, 700000, 650010],
             "XBTEUR": [32000, 31000, 30000, 28000],
-            "XBTGBP": [27000, 26000, 25000, 23000],
+            "XBTGBP": [27000, 26000, 25001, 23000],
             "ETHXBT": [0.055, 0.050, 0.045, 0.040],
             "LTCXBT": [0.0020, 0.0018, 0.0015, 0.0012],
         }
-        return defaults.get(self.trading_pair, [45000, 42000, 40000, 35000])
+        return defaults.get(self.trading_pair, [45001, 42000, 40000, 35001])
 
 
 # Trading Signals Configuration

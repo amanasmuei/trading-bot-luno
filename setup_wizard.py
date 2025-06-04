@@ -313,7 +313,7 @@ class SetupWizard:
                     f"DASHBOARD_HOST={template_config.get('DASHBOARD_HOST', '127.0.0.1')}\n"
                 )
                 f.write(
-                    f"DASHBOARD_PORT={template_config.get('DASHBOARD_PORT', '5000')}\n\n"
+                    f"DASHBOARD_PORT={template_config.get('DASHBOARD_PORT', '5001')}\n\n"
                 )
 
                 # Risk management
@@ -462,7 +462,7 @@ python3 scripts/run_bot.py --dry-run
             f"   {Colors.WHITE}python scripts/run_bot.py --dry-run{Colors.END}  # Manual start"
         )
         print(
-            f"   {Colors.WHITE}http://localhost:5000{Colors.END}               # View dashboard"
+            f"   {Colors.WHITE}http://localhost:5001{Colors.END}               # View dashboard"
         )
         print()
 
@@ -477,7 +477,7 @@ python3 scripts/run_bot.py --dry-run
                 f"   • Bot is in {Colors.RED}LIVE MODE{Colors.END} - real money at risk!"
             )
             print(f"   • Start with small position sizes")
-        print(f"   • Check the dashboard regularly at http://localhost:5000")
+        print(f"   • Check the dashboard regularly at http://localhost:5001")
         print(f"   • Logs are saved in the 'logs' directory")
         print()
 

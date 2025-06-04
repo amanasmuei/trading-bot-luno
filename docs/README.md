@@ -136,7 +136,7 @@ Options:
   --take-profit %        Take profit percentage
   --check-interval SEC   Check interval in seconds
   --dashboard-host HOST  Dashboard host (default: 127.0.0.1)
-  --dashboard-port PORT  Dashboard port (default: 5000)
+  --dashboard-port PORT  Dashboard port (default: 5001)
 ```
 
 ## 📊 Trading Strategy
@@ -181,7 +181,7 @@ The bot uses a multi-factor approach to generate trading signals:
 
 ## 🌐 Web Dashboard
 
-Access the dashboard at `http://localhost:5000` when running.
+Access the dashboard at `http://localhost:5001` when running.
 
 ### Dashboard Features
 
@@ -293,7 +293,7 @@ tail -f trading_bot.log
 #### Dashboard Not Loading
 ```bash
 # Check if port is available
-netstat -an | grep 5000
+netstat -an | grep 5001
 
 # Try different port
 python run_bot.py --dashboard-port 5001

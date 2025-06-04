@@ -1,268 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard Demo - Luno Trading Bot</title>
-    <meta name="description" content="Interactive demo of the Luno Trading Bot dashboard with real-time monitoring features.">
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta
+      name="description"
+      content="Interactive demo of the Luno Trading Bot dashboard with real-time monitoring features."
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-logo">
-                <i class="fas fa-robot"></i>
-                <span>Luno Trading Bot</span>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="index.html" class="nav-link">Home</a></li>
-                <li><a href="index.html#features" class="nav-link">Features</a></li>
-                <li><a href="setup.html" class="nav-link">Setup</a></li>
-                <li><a href="documentation.html" class="nav-link">Docs</a></li>
-                <li><a href="dashboard-demo.html" class="nav-link active">Demo</a></li>
-                <li><a href="https://github.com/amanasmuei/trading-bot-luno" class="nav-link" target="_blank">
-                    <i class="fab fa-github"></i> GitHub
-                </a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+      <div class="nav-container">
+        <div class="nav-logo">
+          <i class="fas fa-robot"></i>
+          <span>Luno Trading Bot</span>
         </div>
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="index.html#features" class="nav-link">Features</a></li>
+          <li><a href="setup.html" class="nav-link">Setup</a></li>
+          <li><a href="documentation.html" class="nav-link">Docs</a></li>
+          <li>
+            <a href="dashboard-demo.html" class="nav-link active">Demo</a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/amanasmuei/trading-bot-luno"
+              class="nav-link"
+              target="_blank"
+            >
+              <i class="fab fa-github"></i> GitHub
+            </a>
+          </li>
+        </ul>
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
     </nav>
 
     <!-- Demo Header -->
     <section class="demo-header">
-        <div class="container">
-            <h1><i class="fas fa-chart-line"></i> Live Dashboard Demo</h1>
-            <p>Experience the real-time trading dashboard in action</p>
-            <div class="demo-notice">
-                <i class="fas fa-info-circle"></i>
-                <span>This is a simulation with mock data for demonstration purposes</span>
-            </div>
+      <div class="container">
+        <h1><i class="fas fa-chart-line"></i> Live Dashboard Demo</h1>
+        <p>Experience the real-time trading dashboard in action</p>
+        <div class="demo-notice">
+          <i class="fas fa-info-circle"></i>
+          <span
+            >This is a simulation with mock data for demonstration
+            purposes</span
+          >
         </div>
+      </div>
     </section>
 
     <!-- Dashboard Content -->
     <section class="dashboard-demo">
-        <div class="container">
-            <div class="dashboard-header">
-                <h2>🚀 Luno Trading Bot Dashboard</h2>
-                <p>Real-time monitoring and performance tracking</p>
-                <div class="dashboard-controls">
-                    <button class="btn btn-primary" onclick="toggleBot()">
-                        <i class="fas fa-play" id="bot-toggle-icon"></i>
-                        <span id="bot-toggle-text">Start Bot</span>
-                    </button>
-                    <button class="btn btn-secondary" onclick="refreshDashboard()">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                </div>
-            </div>
-
-            <div class="dashboard-grid">
-                <!-- Bot Status -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-robot"></i> Bot Status</h3>
-                    <div id="bot-status">
-                        <span class="status-indicator status-stopped" id="status-indicator"></span>
-                        <span id="status-text">Stopped</span>
-                    </div>
-                    <div id="bot-config">
-                        <div class="metric">
-                            <span>Trading Pair:</span>
-                            <span>XBTMYR</span>
-                        </div>
-                        <div class="metric">
-                            <span>Mode:</span>
-                            <span>Simulation</span>
-                        </div>
-                        <div class="metric">
-                            <span>Position Size:</span>
-                            <span>10%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Current Price -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-coins"></i> Current Market</h3>
-                    <div class="price-display" id="current-price">RM 185,420</div>
-                    <div id="market-metrics">
-                        <div class="metric">
-                            <span>Bid:</span>
-                            <span id="bid-price">RM 185,380</span>
-                        </div>
-                        <div class="metric">
-                            <span>Ask:</span>
-                            <span id="ask-price">RM 185,460</span>
-                        </div>
-                        <div class="metric">
-                            <span>24h Volume:</span>
-                            <span id="volume">142.35 BTC</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Portfolio -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-wallet"></i> Portfolio</h3>
-                    <div id="portfolio-data">
-                        <div class="metric">
-                            <span>BTC:</span>
-                            <span>0.125000</span>
-                        </div>
-                        <div class="metric">
-                            <span>MYR:</span>
-                            <span>5,420.50</span>
-                        </div>
-                        <div class="metric">
-                            <span>Total Value:</span>
-                            <span id="total-value">RM 28,597.50</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Performance -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-chart-area"></i> Performance</h3>
-                    <div id="performance-data">
-                        <div class="metric">
-                            <span>Today's P&L:</span>
-                            <span class="positive" id="daily-pnl">+RM 245.80</span>
-                        </div>
-                        <div class="metric">
-                            <span>Total P&L:</span>
-                            <span class="positive" id="total-pnl">+RM 1,597.50</span>
-                        </div>
-                        <div class="metric">
-                            <span>Win Rate:</span>
-                            <span id="win-rate">68.5%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Trades -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-history"></i> Recent Trades</h3>
-                    <div class="trades-list" id="recent-trades">
-                        <div class="trade-item simulated">
-                            <div>2024-01-15 14:32:15</div>
-                            <div>BUY 0.005 BTC at RM 185,200 (Simulated)</div>
-                        </div>
-                        <div class="trade-item simulated">
-                            <div>2024-01-15 13:45:22</div>
-                            <div>SELL 0.003 BTC at RM 185,800 (Simulated)</div>
-                        </div>
-                        <div class="trade-item simulated">
-                            <div>2024-01-15 12:18:45</div>
-                            <div>BUY 0.002 BTC at RM 184,950 (Simulated)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Trading Signals -->
-                <div class="dashboard-card">
-                    <h3><i class="fas fa-signal"></i> Trading Signals</h3>
-                    <div id="trading-signals">
-                        <div class="signal-item">
-                            <span class="signal-type buy">BUY</span>
-                            <span>RSI Oversold (28.5)</span>
-                        </div>
-                        <div class="signal-item">
-                            <span class="signal-type neutral">HOLD</span>
-                            <span>MACD Neutral</span>
-                        </div>
-                        <div class="signal-item">
-                            <span class="signal-type sell">SELL</span>
-                            <span>Resistance at RM 186,000</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Price Chart -->
-                <div class="dashboard-card chart-container">
-                    <h3>
-                        <i class="fas fa-chart-line"></i>
-                        Price Chart (24h)
-                        <button class="refresh-btn" onclick="updateChart()">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </h3>
-                    <div id="price-chart"></div>
-                </div>
-            </div>
+      <div class="container">
+        <div class="dashboard-header">
+          <h2>🚀 Luno Trading Bot Dashboard</h2>
+          <p>Real-time monitoring and performance tracking</p>
+          <div class="dashboard-controls">
+            <button class="btn btn-primary" onclick="toggleBot()">
+              <i class="fas fa-play" id="bot-toggle-icon"></i>
+              <span id="bot-toggle-text">Start Bot</span>
+            </button>
+            <button class="btn btn-secondary" onclick="refreshDashboard()">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
         </div>
+
+        <div class="dashboard-grid">
+          <!-- Bot Status -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-robot"></i> Bot Status</h3>
+            <div id="bot-status">
+              <span
+                class="status-indicator status-stopped"
+                id="status-indicator"
+              ></span>
+              <span id="status-text">Stopped</span>
+            </div>
+            <div id="bot-config">
+              <div class="metric">
+                <span>Trading Pair:</span>
+                <span>XBTMYR</span>
+              </div>
+              <div class="metric">
+                <span>Mode:</span>
+                <span>Simulation</span>
+              </div>
+              <div class="metric">
+                <span>Position Size:</span>
+                <span>10%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Price -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-coins"></i> Current Market</h3>
+            <div class="price-display" id="current-price">RM 185,420</div>
+            <div id="market-metrics">
+              <div class="metric">
+                <span>Bid:</span>
+                <span id="bid-price">RM 185,380</span>
+              </div>
+              <div class="metric">
+                <span>Ask:</span>
+                <span id="ask-price">RM 185,460</span>
+              </div>
+              <div class="metric">
+                <span>24h Volume:</span>
+                <span id="volume">142.35 BTC</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Portfolio -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-wallet"></i> Portfolio</h3>
+            <div id="portfolio-data">
+              <div class="metric">
+                <span>BTC:</span>
+                <span>0.125001</span>
+              </div>
+              <div class="metric">
+                <span>MYR:</span>
+                <span>5,420.50</span>
+              </div>
+              <div class="metric">
+                <span>Total Value:</span>
+                <span id="total-value">RM 28,597.50</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Performance -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-chart-area"></i> Performance</h3>
+            <div id="performance-data">
+              <div class="metric">
+                <span>Today's P&L:</span>
+                <span class="positive" id="daily-pnl">+RM 245.80</span>
+              </div>
+              <div class="metric">
+                <span>Total P&L:</span>
+                <span class="positive" id="total-pnl">+RM 1,597.50</span>
+              </div>
+              <div class="metric">
+                <span>Win Rate:</span>
+                <span id="win-rate">68.5%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Trades -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-history"></i> Recent Trades</h3>
+            <div class="trades-list" id="recent-trades">
+              <div class="trade-item simulated">
+                <div>2024-01-15 14:32:15</div>
+                <div>BUY 0.005 BTC at RM 185,200 (Simulated)</div>
+              </div>
+              <div class="trade-item simulated">
+                <div>2024-01-15 13:45:22</div>
+                <div>SELL 0.003 BTC at RM 185,800 (Simulated)</div>
+              </div>
+              <div class="trade-item simulated">
+                <div>2024-01-15 12:18:45</div>
+                <div>BUY 0.002 BTC at RM 184,950 (Simulated)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trading Signals -->
+          <div class="dashboard-card">
+            <h3><i class="fas fa-signal"></i> Trading Signals</h3>
+            <div id="trading-signals">
+              <div class="signal-item">
+                <span class="signal-type buy">BUY</span>
+                <span>RSI Oversold (28.5)</span>
+              </div>
+              <div class="signal-item">
+                <span class="signal-type neutral">HOLD</span>
+                <span>MACD Neutral</span>
+              </div>
+              <div class="signal-item">
+                <span class="signal-type sell">SELL</span>
+                <span>Resistance at RM 186,000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Price Chart -->
+          <div class="dashboard-card chart-container">
+            <h3>
+              <i class="fas fa-chart-line"></i>
+              Price Chart (24h)
+              <button class="refresh-btn" onclick="updateChart()">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </h3>
+            <div id="price-chart"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Demo Features -->
     <section class="demo-features">
-        <div class="container">
-            <h2>Dashboard Features</h2>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <i class="fas fa-clock"></i>
-                    <h4>Real-time Updates</h4>
-                    <p>Live price feeds and portfolio updates every 30 seconds</p>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <h4>Interactive Charts</h4>
-                    <p>Zoom, pan, and analyze price movements with detailed charts</p>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-bell"></i>
-                    <h4>Trading Alerts</h4>
-                    <p>Get notified of important market movements and trade executions</p>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-mobile-alt"></i>
-                    <h4>Mobile Responsive</h4>
-                    <p>Access your dashboard from any device, anywhere</p>
-                </div>
-            </div>
+      <div class="container">
+        <h2>Dashboard Features</h2>
+        <div class="features-grid">
+          <div class="feature-item">
+            <i class="fas fa-clock"></i>
+            <h4>Real-time Updates</h4>
+            <p>Live price feeds and portfolio updates every 30 seconds</p>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-chart-bar"></i>
+            <h4>Interactive Charts</h4>
+            <p>Zoom, pan, and analyze price movements with detailed charts</p>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-bell"></i>
+            <h4>Trading Alerts</h4>
+            <p>
+              Get notified of important market movements and trade executions
+            </p>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-mobile-alt"></i>
+            <h4>Mobile Responsive</h4>
+            <p>Access your dashboard from any device, anywhere</p>
+          </div>
         </div>
+      </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Luno Trading Bot</h3>
-                    <p>Professional automated trading solution for cryptocurrency markets.</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="index.html#features">Features</a></li>
-                        <li><a href="setup.html">Setup Guide</a></li>
-                        <li><a href="documentation.html">Documentation</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="https://github.com/amanasmuei/trading-bot-luno" target="_blank">GitHub Repository</a></li>
-                        <li><a href="https://github.com/amanasmuei/trading-bot-luno/issues" target="_blank">Report Issues</a></li>
-                        <li><a href="https://www.luno.com/api" target="_blank">Luno API</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2024 Luno Trading Bot. Open source project.</p>
-            </div>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Luno Trading Bot</h3>
+            <p>
+              Professional automated trading solution for cryptocurrency
+              markets.
+            </p>
+          </div>
+          <div class="footer-section">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="index.html">Home</a></li>
+              <li><a href="index.html#features">Features</a></li>
+              <li><a href="setup.html">Setup Guide</a></li>
+              <li><a href="documentation.html">Documentation</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Resources</h4>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/amanasmuei/trading-bot-luno"
+                  target="_blank"
+                  >GitHub Repository</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://github.com/amanasmuei/trading-bot-luno/issues"
+                  target="_blank"
+                  >Report Issues</a
+                >
+              </li>
+              <li>
+                <a href="https://www.luno.com/api" target="_blank">Luno API</a>
+              </li>
+            </ul>
+          </div>
         </div>
+        <div class="footer-bottom">
+          <p>&copy; 2024 Luno Trading Bot. Open source project.</p>
+        </div>
+      </div>
     </footer>
 
     <script src="script.js"></script>
     <script src="dashboard-demo.js"></script>
-</body>
+  </body>
 </html>
