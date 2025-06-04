@@ -170,7 +170,7 @@ class TradingDashboard:
 
                 # RSI
                 if len(close_prices) >= self.config.rsi_period:
-                    rsi_values = analyzer._calculate_rsi(
+                    rsi_values = analyzer.calculate_rsi(
                         close_prices, self.config.rsi_period
                     )
                     indicators["rsi"] = rsi_values
@@ -179,10 +179,10 @@ class TradingDashboard:
                 if len(close_prices) >= max(
                     self.config.ema_short, self.config.ema_long
                 ):
-                    ema_short = analyzer._calculate_ema(
+                    ema_short = analyzer.calculate_ema(
                         close_prices, self.config.ema_short
                     )
-                    ema_long = analyzer._calculate_ema(
+                    ema_long = analyzer.calculate_ema(
                         close_prices, self.config.ema_long
                     )
                     indicators["ema_short"] = ema_short
@@ -190,7 +190,7 @@ class TradingDashboard:
 
                 # MACD
                 if len(close_prices) >= 26:  # MACD needs at least 26 periods
-                    macd_line, signal_line, histogram = analyzer._calculate_macd(
+                    macd_line, signal_line, histogram = analyzer.calculate_macd(
                         close_prices
                     )
                     indicators["macd_line"] = macd_line
@@ -199,7 +199,7 @@ class TradingDashboard:
 
                 # Bollinger Bands
                 if len(close_prices) >= self.config.bollinger_period:
-                    bb_upper, bb_middle, bb_lower = analyzer._calculate_bollinger_bands(
+                    bb_upper, bb_middle, bb_lower = analyzer.calculate_bollinger_bands(
                         close_prices,
                         self.config.bollinger_period,
                         self.config.bollinger_std,
@@ -323,6 +323,72 @@ class TradingDashboard:
                 )
 
             except Exception as e:
+                return jsonify({"success": False, "error": str(e)})
+
+        @self.app.route("/api/toggle_mode", methods=["POST"])
+        def toggle_trading_mode():
+            """Toggle between dry run and live trading mode"""
+            try:
+                data = request.get_json()
+                new_dry_run = data.get("dry_run", True)
+
+                # Update the config
+                self.config.dry_run = new_dry_run
+
+                # Update environment variable for current session
+                os.environ["DRY_RUN"] = str(new_dry_run).lower()
+
+                # Try to write to .env file to persist the change (if writable)
+                env_file_path = ".env"
+                env_updated = False
+                try:
+                    if os.path.exists(env_file_path):
+                        # Read existing .env file
+                        with open(env_file_path, "r") as f:
+                            lines = f.readlines()
+
+                        # Update or add DRY_RUN setting
+                        dry_run_found = False
+                        for i, line in enumerate(lines):
+                            if line.strip().startswith("DRY_RUN="):
+                                lines[i] = f"DRY_RUN={str(new_dry_run).lower()}\n"
+                                dry_run_found = True
+                                break
+
+                        # If DRY_RUN not found, add it
+                        if not dry_run_found:
+                            lines.append(f"DRY_RUN={str(new_dry_run).lower()}\n")
+
+                        # Write back to .env file
+                        with open(env_file_path, "w") as f:
+                            f.writelines(lines)
+                        env_updated = True
+
+                except (OSError, IOError) as e:
+                    # File system is read-only or other write error
+                    logger.warning(f"Could not persist to .env file: {e}")
+                    env_updated = False
+
+                mode_text = "simulation" if new_dry_run else "live trading"
+                logger.info(f"Trading mode changed to: {mode_text}")
+
+                # Prepare response message
+                if env_updated:
+                    message = f"Mode changed to {mode_text}"
+                else:
+                    message = f"Mode changed to {mode_text} (session only - restart will reset)"
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "message": message,
+                        "dry_run": new_dry_run,
+                        "persisted": env_updated,
+                    }
+                )
+
+            except Exception as e:
+                logger.error(f"Error toggling trading mode: {e}")
                 return jsonify({"success": False, "error": str(e)})
 
     def _parse_trades_from_log(self):
@@ -552,6 +618,80 @@ DASHBOARD_HTML = """
         .chart-title h3 {
             margin: 0;
         }
+        
+        /* Toggle Switch Styles */
+        .mode-toggle-container {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-bottom: 10px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ffc107;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .toggle-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .toggle-label-left,
+        .toggle-label-right {
+            font-weight: 500;
+        }
+        
+        .toggle-label-left {
+            color: #ffc107;
+        }
+        
+        .toggle-label-right {
+            color: #4CAF50;
+        }
     </style>
 </head>
 <body>
@@ -569,6 +709,16 @@ DASHBOARD_HTML = """
                 <span>Loading...</span>
             </div>
             <div id="bot-config"></div>
+            <div class="mode-toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="mode-toggle" onchange="toggleTradingMode()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <div class="toggle-labels">
+                    <span class="toggle-label-left">🎭 Simulation</span>
+                    <span class="toggle-label-right">💰 Live</span>
+                </div>
+            </div>
         </div>
 
         <!-- Current Price -->
@@ -650,6 +800,7 @@ DASHBOARD_HTML = """
                     if (data.success) {
                         const statusEl = document.getElementById('bot-status');
                         const configEl = document.getElementById('bot-config');
+                        const toggleEl = document.getElementById('mode-toggle');
                         
                         const status = data.data.running ? 'Running' : 'Stopped';
                         const statusClass = data.data.running ? 'status-running' : 'status-stopped';
@@ -673,6 +824,9 @@ DASHBOARD_HTML = """
                                 <span class="metric-value">${data.data.config.max_position_size}%</span>
                             </div>
                         `;
+                        
+                        // Update toggle switch state (checked = live trading, unchecked = simulation)
+                        toggleEl.checked = !data.data.config.dry_run;
                     }
                 })
                 .catch(error => console.error('Error updating bot status:', error));
@@ -1067,6 +1221,73 @@ DASHBOARD_HTML = """
                         </div>
                     `;
                 });
+        }
+
+        function toggleTradingMode() {
+            const toggleEl = document.getElementById('mode-toggle');
+            const newDryRun = !toggleEl.checked; // If checked = live, so dry_run = false
+            
+            // Send request to toggle mode
+            fetch('/api/toggle_mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    dry_run: newDryRun
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const message = `✅ ${data.message}`;
+                    
+                    // Create a temporary notification
+                    const notification = document.createElement('div');
+                    notification.innerHTML = message;
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #4CAF50;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 5px;
+                        z-index: 1000;
+                        font-weight: 500;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    `;
+                    
+                    document.body.appendChild(notification);
+                    
+                    // Remove notification after 3 seconds
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 3000);
+                    
+                    // Refresh the dashboard to show updated status
+                    setTimeout(() => {
+                        updateDashboard();
+                    }, 500);
+                    
+                } else {
+                    // Show error message
+                    alert(`❌ Error: ${data.error}`);
+                    
+                    // Revert toggle state
+                    toggleEl.checked = !newDryRun;
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling mode:', error);
+                alert('❌ Network error while changing mode');
+                
+                // Revert toggle state
+                toggleEl.checked = !newDryRun;
+            });
         }
     </script>
 </body>
