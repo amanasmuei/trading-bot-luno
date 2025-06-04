@@ -429,8 +429,9 @@ DASHBOARD_HTML = """
         }
         .chart-container {
             grid-column: 1 / -1;
-            height: 700px;
-            min-height: 700px;
+            height: calc(100vh - 400px);
+            min-height: 500px;
+            max-height: 800px;
         }
         .chart-controls {
             display: flex;
