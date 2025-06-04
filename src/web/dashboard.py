@@ -63,7 +63,7 @@ class TradingDashboard:
 
         @self.app.route("/api/price_chart")
         def get_price_chart():
-            """Get candlestick chart data with user-selectable timeframe and interval"""
+            """Get candlestick chart data with technical analysis indicators"""
             try:
                 # Get timeframe and interval from query parameters
                 timeframe = request.args.get("timeframe", "1d")  # Default 1 day
@@ -150,19 +150,84 @@ class TradingDashboard:
                         {"success": False, "error": "No candle data available"}
                     )
 
-                # Create candlestick chart data
+                # Calculate technical indicators
+                close_prices = [float(c["close"]) for c in candles]
+                high_prices = [float(c["high"]) for c in candles]
+                low_prices = [float(c["low"]) for c in candles]
+                volumes = [float(c["volume"]) for c in candles]
+
+                # Import technical analysis module
+                from src.bot.technical_analysis import TechnicalAnalyzer
+
+                analyzer = TechnicalAnalyzer(self.config)
+
+                # Calculate indicators using the bot's configuration
+                indicators = {}
+                timestamps = [
+                    datetime.fromtimestamp(c["timestamp"] / 1000).isoformat()
+                    for c in candles
+                ]
+
+                # RSI
+                if len(close_prices) >= self.config.rsi_period:
+                    rsi_values = analyzer._calculate_rsi(
+                        close_prices, self.config.rsi_period
+                    )
+                    indicators["rsi"] = rsi_values
+
+                # EMAs
+                if len(close_prices) >= max(
+                    self.config.ema_short, self.config.ema_long
+                ):
+                    ema_short = analyzer._calculate_ema(
+                        close_prices, self.config.ema_short
+                    )
+                    ema_long = analyzer._calculate_ema(
+                        close_prices, self.config.ema_long
+                    )
+                    indicators["ema_short"] = ema_short
+                    indicators["ema_long"] = ema_long
+
+                # MACD
+                if len(close_prices) >= 26:  # MACD needs at least 26 periods
+                    macd_line, signal_line, histogram = analyzer._calculate_macd(
+                        close_prices
+                    )
+                    indicators["macd_line"] = macd_line
+                    indicators["macd_signal"] = signal_line
+                    indicators["macd_histogram"] = histogram
+
+                # Bollinger Bands
+                if len(close_prices) >= self.config.bollinger_period:
+                    bb_upper, bb_middle, bb_lower = analyzer._calculate_bollinger_bands(
+                        close_prices,
+                        self.config.bollinger_period,
+                        self.config.bollinger_std,
+                    )
+                    indicators["bb_upper"] = bb_upper
+                    indicators["bb_middle"] = bb_middle
+                    indicators["bb_lower"] = bb_lower
+
+                # Create candlestick chart data with technical indicators
                 chart_data = {
-                    "timestamps": [
-                        datetime.fromtimestamp(c["timestamp"] / 1000).isoformat()
-                        for c in candles
-                    ],
+                    "timestamps": timestamps,
                     "open": [float(c["open"]) for c in candles],
-                    "high": [float(c["high"]) for c in candles],
-                    "low": [float(c["low"]) for c in candles],
-                    "close": [float(c["close"]) for c in candles],
-                    "volume": [float(c["volume"]) for c in candles],
+                    "high": high_prices,
+                    "low": low_prices,
+                    "close": close_prices,
+                    "volume": volumes,
                     "timeframe": timeframe,
                     "interval": interval,
+                    "indicators": indicators,
+                    "config": {
+                        "rsi_period": self.config.rsi_period,
+                        "rsi_oversold": self.config.rsi_oversold,
+                        "rsi_overbought": self.config.rsi_overbought,
+                        "ema_short": self.config.ema_short,
+                        "ema_long": self.config.ema_long,
+                        "bollinger_period": self.config.bollinger_period,
+                        "bollinger_std": self.config.bollinger_std,
+                    },
                 }
 
                 return jsonify({"success": True, "data": chart_data})
@@ -711,6 +776,9 @@ DASHBOARD_HTML = """
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        const indicators = data.data.indicators || {};
+                        const config = data.data.config || {};
+                        
                         // Create candlestick chart
                         const candlestickTrace = {
                             x: data.data.timestamps,
@@ -720,6 +788,7 @@ DASHBOARD_HTML = """
                             close: data.data.close,
                             type: 'candlestick',
                             name: 'XBTMYR',
+                            yaxis: 'y',
                             increasing: {
                                 line: { color: '#26a69a' },
                                 fillcolor: '#26a69a'
@@ -730,8 +799,139 @@ DASHBOARD_HTML = """
                             }
                         };
 
-                        // Create volume trace (as bar chart below)
-                        const volumeTrace = {
+                        // Start with candlestick and volume
+                        const chartData = [candlestickTrace];
+
+                        // Add EMA indicators
+                        if (indicators.ema_short) {
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.ema_short,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: `EMA ${config.ema_short}`,
+                                yaxis: 'y',
+                                line: { color: '#ff9800', width: 2 }
+                            });
+                        }
+                        
+                        if (indicators.ema_long) {
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.ema_long,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: `EMA ${config.ema_long}`,
+                                yaxis: 'y',
+                                line: { color: '#2196f3', width: 2 }
+                            });
+                        }
+
+                        // Add Bollinger Bands
+                        if (indicators.bb_upper && indicators.bb_lower && indicators.bb_middle) {
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.bb_upper,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'BB Upper',
+                                yaxis: 'y',
+                                line: { color: 'rgba(156, 39, 176, 0.5)', width: 1, dash: 'dot' }
+                            });
+                            
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.bb_middle,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'BB Middle',
+                                yaxis: 'y',
+                                line: { color: 'rgba(156, 39, 176, 0.7)', width: 1 }
+                            });
+                            
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.bb_lower,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'BB Lower',
+                                yaxis: 'y',
+                                line: { color: 'rgba(156, 39, 176, 0.5)', width: 1, dash: 'dot' }
+                            });
+                        }
+
+                        // Add RSI (on separate subplot)
+                        if (indicators.rsi) {
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.rsi,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: `RSI (${config.rsi_period})`,
+                                yaxis: 'y3',
+                                line: { color: '#673ab7', width: 2 }
+                            });
+                            
+                            // Add RSI overbought/oversold lines
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: Array(data.data.timestamps.length).fill(config.rsi_overbought),
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'RSI Overbought',
+                                yaxis: 'y3',
+                                line: { color: 'red', width: 1, dash: 'dash' },
+                                showlegend: false
+                            });
+                            
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: Array(data.data.timestamps.length).fill(config.rsi_oversold),
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'RSI Oversold',
+                                yaxis: 'y3',
+                                line: { color: 'green', width: 1, dash: 'dash' },
+                                showlegend: false
+                            });
+                        }
+
+                        // Add MACD (on separate subplot)
+                        if (indicators.macd_line && indicators.macd_signal) {
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.macd_line,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'MACD Line',
+                                yaxis: 'y4',
+                                line: { color: '#4caf50', width: 2 }
+                            });
+                            
+                            chartData.push({
+                                x: data.data.timestamps,
+                                y: indicators.macd_signal,
+                                type: 'scatter',
+                                mode: 'lines',
+                                name: 'MACD Signal',
+                                yaxis: 'y4',
+                                line: { color: '#f44336', width: 2 }
+                            });
+                            
+                            if (indicators.macd_histogram) {
+                                chartData.push({
+                                    x: data.data.timestamps,
+                                    y: indicators.macd_histogram,
+                                    type: 'bar',
+                                    name: 'MACD Histogram',
+                                    yaxis: 'y4',
+                                    marker: { color: 'rgba(96, 125, 139, 0.6)' }
+                                });
+                            }
+                        }
+
+                        // Add volume trace
+                        chartData.push({
                             x: data.data.timestamps,
                             y: data.data.volume,
                             type: 'bar',
@@ -744,29 +944,43 @@ DASHBOARD_HTML = """
                                     width: 1
                                 }
                             }
-                        };
-
-                        const chartData = [candlestickTrace, volumeTrace];
+                        });
 
                         const layout = {
                             title: {
-                                text: `XBTMYR Candlestick Chart (${data.data.timeframe} - ${data.data.interval} intervals)`,
+                                text: `XBTMYR Technical Analysis Chart (${data.data.timeframe} - ${data.data.interval})`,
                                 font: { size: 16, color: '#333' }
                             },
                             xaxis: {
                                 title: 'Time',
-                                rangeslider: { visible: false }, // Disable range slider for cleaner look
-                                type: 'date'
+                                rangeslider: { visible: false },
+                                type: 'date',
+                                domain: [0, 1]
                             },
+                            // Main price chart (top 50%)
                             yaxis: {
                                 title: 'Price (MYR)',
-                                domain: [0.3, 1], // Price chart takes top 70%
+                                domain: [0.6, 1],
                                 side: 'left'
                             },
+                            // Volume chart (10%)
                             yaxis2: {
                                 title: 'Volume',
-                                domain: [0, 0.25], // Volume chart takes bottom 25%
+                                domain: [0.48, 0.58],
                                 side: 'right'
+                            },
+                            // RSI chart (15%)
+                            yaxis3: {
+                                title: 'RSI',
+                                domain: [0.3, 0.46],
+                                side: 'left',
+                                range: [0, 100]
+                            },
+                            // MACD chart (bottom 25%)
+                            yaxis4: {
+                                title: 'MACD',
+                                domain: [0, 0.28],
+                                side: 'left'
                             },
                             margin: { t: 60, r: 50, b: 50, l: 80 },
                             plot_bgcolor: 'rgba(0,0,0,0)',
@@ -776,18 +990,57 @@ DASHBOARD_HTML = """
                             legend: {
                                 x: 0,
                                 y: 1,
-                                bgcolor: 'rgba(255, 255, 255, 0.8)'
-                            }
+                                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                bordercolor: 'rgba(0, 0, 0, 0.1)',
+                                borderwidth: 1
+                            },
+                            hovermode: 'x unified'
                         };
 
-                        const config = {
+                        const plotConfig = {
                             responsive: true,
                             displayModeBar: true,
                             modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
                             displaylogo: false
                         };
 
-                        Plotly.newPlot('price-chart', chartData, layout, config);
+                        Plotly.newPlot('price-chart', chartData, layout, plotConfig);
+                        
+                        // Add current indicator values display
+                        if (indicators.rsi || indicators.ema_short || indicators.macd_line) {
+                            const currentValues = [];
+                            
+                            if (indicators.rsi && indicators.rsi.length > 0) {
+                                const currentRSI = indicators.rsi[indicators.rsi.length - 1];
+                                currentValues.push(`RSI: ${currentRSI?.toFixed(1) || 'N/A'}`);
+                            }
+                            
+                            if (indicators.ema_short && indicators.ema_short.length > 0) {
+                                const currentEMAShort = indicators.ema_short[indicators.ema_short.length - 1];
+                                currentValues.push(`EMA${config.ema_short}: ${currentEMAShort?.toFixed(2) || 'N/A'}`);
+                            }
+                            
+                            if (indicators.ema_long && indicators.ema_long.length > 0) {
+                                const currentEMALong = indicators.ema_long[indicators.ema_long.length - 1];
+                                currentValues.push(`EMA${config.ema_long}: ${currentEMALong?.toFixed(2) || 'N/A'}`);
+                            }
+                            
+                            if (indicators.macd_line && indicators.macd_line.length > 0) {
+                                const currentMACD = indicators.macd_line[indicators.macd_line.length - 1];
+                                currentValues.push(`MACD: ${currentMACD?.toFixed(4) || 'N/A'}`);
+                            }
+                            
+                            // Display current values
+                            if (currentValues.length > 0) {
+                                const valuesHtml = `
+                                    <div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.9em;">
+                                        <strong>Current Indicators:</strong> ${currentValues.join(' | ')}
+                                    </div>
+                                `;
+                                document.getElementById('price-chart').insertAdjacentHTML('afterend', valuesHtml);
+                            }
+                        }
+                        
                     } else {
                         // Handle error case
                         console.error('Error fetching chart data:', data.error);
