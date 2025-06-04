@@ -6,8 +6,6 @@ import json
 import os
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify, request
-import plotly.graph_objs as go
-import plotly.utils
 from threading import Thread
 import logging
 
@@ -59,6 +57,74 @@ class TradingDashboard:
                     }
                 )
             except Exception as e:
+                return jsonify({"success": False, "error": str(e)})
+
+        @self.app.route("/api/chart_data")
+        def get_chart_data():
+            """Get basic chart data for TradingView integration"""
+            try:
+                # Get current market data
+                ticker = self.client.get_ticker(self.config.trading_pair)
+
+                # Get some recent candles for indicator calculation
+                candles_data = self.client.get_candles(
+                    self.config.trading_pair,
+                    3600,
+                    int((datetime.now() - timedelta(hours=24)).timestamp() * 1000),
+                )
+                candles = candles_data.get("candles", [])
+
+                indicators = {}
+                if candles:
+                    close_prices = [float(c["close"]) for c in candles]
+
+                    # Import technical analysis module
+                    from src.bot.technical_analysis import TechnicalAnalyzer
+
+                    analyzer = TechnicalAnalyzer(self.config)
+
+                    # Calculate basic indicators
+                    if len(close_prices) >= self.config.rsi_period:
+                        rsi_values = analyzer.calculate_rsi(
+                            close_prices, self.config.rsi_period
+                        )
+                        if rsi_values:
+                            indicators["current_rsi"] = rsi_values[-1]
+
+                    if len(close_prices) >= max(
+                        self.config.ema_short, self.config.ema_long
+                    ):
+                        ema_short = analyzer.calculate_ema(
+                            close_prices, self.config.ema_short
+                        )
+                        ema_long = analyzer.calculate_ema(
+                            close_prices, self.config.ema_long
+                        )
+                        if ema_short:
+                            indicators["current_ema_short"] = ema_short[-1]
+                        if ema_long:
+                            indicators["current_ema_long"] = ema_long[-1]
+
+                return jsonify(
+                    {
+                        "success": True,
+                        "data": {
+                            "price": float(ticker["last_trade"]),
+                            "bid": float(ticker["bid"]),
+                            "ask": float(ticker["ask"]),
+                            "volume": float(ticker.get("rolling_24_hour_volume", 0)),
+                            "indicators": indicators,
+                            "config": {
+                                "rsi_period": self.config.rsi_period,
+                                "ema_short": self.config.ema_short,
+                                "ema_long": self.config.ema_long,
+                            },
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Error in get_chart_data: {e}")
                 return jsonify({"success": False, "error": str(e)})
 
         @self.app.route("/api/price_chart")
@@ -439,7 +505,7 @@ DASHBOARD_HTML = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XBTMYR Trading Bot Dashboard</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -561,8 +627,14 @@ DASHBOARD_HTML = """
         .chart-container {
             grid-column: 1 / -1;
             height: calc(100vh - 400px);
+            min-height: 600px;
+            max-height: 900px;
+        }
+
+        #tradingview-chart {
+            width: 100%;
+            height: 500px;
             min-height: 500px;
-            max-height: 800px;
         }
         .chart-controls {
             display: flex;
@@ -740,51 +812,56 @@ DASHBOARD_HTML = """
             <div class="trades-list" id="recent-trades">Loading...</div>
         </div>
 
-        <!-- Price Chart -->
+        <!-- TradingView Chart -->
         <div class="card chart-container">
             <div class="chart-title">
-                <h3>Candlestick Chart</h3>
-                <button class="refresh-btn" onclick="updateChart()">Refresh</button>
+                <h3>TradingView Chart</h3>
+                <button class="refresh-btn" onclick="refreshTradingViewChart()">Refresh</button>
             </div>
             <div class="chart-controls">
                 <div class="control-group">
-                    <label for="timeframe-select">Timeframe:</label>
-                    <select id="timeframe-select" onchange="updateChart()">
-                        <option value="1h">1 Hour</option>
-                        <option value="4h">4 Hours</option>
-                        <option value="12h">12 Hours</option>
-                        <option value="1d" selected>1 Day</option>
-                        <option value="3d">3 Days</option>
-                        <option value="1w">1 Week</option>
-                        <option value="2w">2 Weeks</option>
-                        <option value="1m">1 Month</option>
-                        <option value="3m">3 Months</option>
+                    <label for="chart-type-select">Chart Type:</label>
+                    <select id="chart-type-select" onchange="updateTradingViewChart()">
+                        <option value="1">Candlestick</option>
+                        <option value="0">Bars</option>
+                        <option value="3">Line</option>
+                        <option value="9">Area</option>
                     </select>
                 </div>
                 <div class="control-group">
                     <label for="interval-select">Interval:</label>
-                    <select id="interval-select" onchange="updateChart()">
-                        <option value="1m">1 Minute</option>
-                        <option value="5m" selected>5 Minutes</option>
-                        <option value="15m">15 Minutes</option>
-                        <option value="30m">30 Minutes</option>
-                        <option value="1h">1 Hour</option>
-                        <option value="4h">4 Hours</option>
-                        <option value="1d">1 Day</option>
+                    <select id="interval-select" onchange="updateTradingViewChart()">
+                        <option value="1">1 Minute</option>
+                        <option value="5" selected>5 Minutes</option>
+                        <option value="15">15 Minutes</option>
+                        <option value="30">30 Minutes</option>
+                        <option value="60">1 Hour</option>
+                        <option value="240">4 Hours</option>
+                        <option value="1D">1 Day</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="theme-select">Theme:</label>
+                    <select id="theme-select" onchange="updateTradingViewChart()">
+                        <option value="light" selected>Light</option>
+                        <option value="dark">Dark</option>
                     </select>
                 </div>
             </div>
-            <div id="price-chart"></div>
+            <div id="tradingview-chart"></div>
         </div>
     </div>
 
     <script>
         // Auto-refresh every 30 seconds
         setInterval(updateDashboard, 30000);
-        
+
+        // TradingView widget instance
+        let tradingViewWidget = null;
+
         // Initial load
         updateDashboard();
-        updateChart();
+        initializeTradingViewChart();
 
         function updateDashboard() {
             updateBotStatus();
@@ -918,309 +995,139 @@ DASHBOARD_HTML = """
                 .catch(error => console.error('Error updating trades:', error));
         }
 
-        function updateChart() {
-            // Get selected timeframe and interval
-            const timeframe = document.getElementById('timeframe-select').value;
+        function initializeTradingViewChart() {
+            // Initialize TradingView widget
+            const chartType = parseInt(document.getElementById('chart-type-select').value);
             const interval = document.getElementById('interval-select').value;
-            
-            // Build API URL with parameters
-            const apiUrl = `/api/price_chart?timeframe=${timeframe}&interval=${interval}`;
-            
-            fetch(apiUrl)
+            const theme = document.getElementById('theme-select').value;
+
+            tradingViewWidget = new TradingView.widget({
+                "width": "100%",
+                "height": 500,
+                "symbol": "BITSTAMP:BTCUSD", // Using Bitcoin as proxy since XBTMYR might not be available
+                "interval": interval,
+                "timezone": "Etc/UTC",
+                "theme": theme,
+                "style": chartType.toString(),
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "hide_top_toolbar": false,
+                "hide_legend": false,
+                "save_image": false,
+                "container_id": "tradingview-chart",
+                "studies": [
+                    "RSI@tv-basicstudies",
+                    "MACD@tv-basicstudies",
+                    "BB@tv-basicstudies",
+                    "EMA@tv-basicstudies"
+                ],
+                "overrides": {
+                    "paneProperties.background": "#ffffff",
+                    "paneProperties.vertGridProperties.color": "#e1e3e6",
+                    "paneProperties.horzGridProperties.color": "#e1e3e6",
+                    "symbolWatermarkProperties.transparency": 90,
+                    "scalesProperties.textColor": "#333333"
+                }
+            });
+        }
+
+        function updateTradingViewChart() {
+            // Remove existing widget
+            if (tradingViewWidget) {
+                document.getElementById('tradingview-chart').innerHTML = '';
+            }
+
+            // Reinitialize with new settings
+            initializeTradingViewChart();
+        }
+
+        function refreshTradingViewChart() {
+            // Refresh the chart data
+            updateTradingViewChart();
+
+            // Fetch indicator data to display alongside TradingView chart
+            fetch('/api/chart_data')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        const indicators = data.data.indicators || {};
-                        const config = data.data.config || {};
-                        
-                        // Create candlestick chart
-                        const candlestickTrace = {
-                            x: data.data.timestamps,
-                            open: data.data.open,
-                            high: data.data.high,
-                            low: data.data.low,
-                            close: data.data.close,
-                            type: 'candlestick',
-                            name: 'XBTMYR',
-                            yaxis: 'y',
-                            increasing: {
-                                line: { color: '#26a69a' },
-                                fillcolor: '#26a69a'
-                            },
-                            decreasing: {
-                                line: { color: '#ef5350' },
-                                fillcolor: '#ef5350'
-                            }
-                        };
+                        // TradingView chart is already initialized and will show technical indicators
+                        console.log('Chart data received successfully');
 
-                        // Start with candlestick and volume
-                        const chartData = [candlestickTrace];
-
-                        // Add EMA indicators
-                        if (indicators.ema_short) {
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.ema_short,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: `EMA ${config.ema_short}`,
-                                yaxis: 'y',
-                                line: { color: '#ff9800', width: 2 }
-                            });
-                        }
-                        
-                        if (indicators.ema_long) {
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.ema_long,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: `EMA ${config.ema_long}`,
-                                yaxis: 'y',
-                                line: { color: '#2196f3', width: 2 }
-                            });
+                        // Display current indicator values if available
+                        if (data.data.indicators) {
+                            displayIndicatorValues(data.data.indicators, data.data.config);
                         }
 
-                        // Add Bollinger Bands
-                        if (indicators.bb_upper && indicators.bb_lower && indicators.bb_middle) {
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.bb_upper,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'BB Upper',
-                                yaxis: 'y',
-                                line: { color: 'rgba(156, 39, 176, 0.5)', width: 1, dash: 'dot' }
-                            });
-                            
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.bb_middle,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'BB Middle',
-                                yaxis: 'y',
-                                line: { color: 'rgba(156, 39, 176, 0.7)', width: 1 }
-                            });
-                            
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.bb_lower,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'BB Lower',
-                                yaxis: 'y',
-                                line: { color: 'rgba(156, 39, 176, 0.5)', width: 1, dash: 'dot' }
-                            });
-                        }
-
-                        // Add RSI (on separate subplot)
-                        if (indicators.rsi) {
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.rsi,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: `RSI (${config.rsi_period})`,
-                                yaxis: 'y3',
-                                line: { color: '#673ab7', width: 2 }
-                            });
-                            
-                            // Add RSI overbought/oversold lines
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: Array(data.data.timestamps.length).fill(config.rsi_overbought),
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'RSI Overbought',
-                                yaxis: 'y3',
-                                line: { color: 'red', width: 1, dash: 'dash' },
-                                showlegend: false
-                            });
-                            
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: Array(data.data.timestamps.length).fill(config.rsi_oversold),
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'RSI Oversold',
-                                yaxis: 'y3',
-                                line: { color: 'green', width: 1, dash: 'dash' },
-                                showlegend: false
-                            });
-                        }
-
-                        // Add MACD (on separate subplot)
-                        if (indicators.macd_line && indicators.macd_signal) {
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.macd_line,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'MACD Line',
-                                yaxis: 'y4',
-                                line: { color: '#4caf50', width: 2 }
-                            });
-                            
-                            chartData.push({
-                                x: data.data.timestamps,
-                                y: indicators.macd_signal,
-                                type: 'scatter',
-                                mode: 'lines',
-                                name: 'MACD Signal',
-                                yaxis: 'y4',
-                                line: { color: '#f44336', width: 2 }
-                            });
-                            
-                            if (indicators.macd_histogram) {
-                                chartData.push({
-                                    x: data.data.timestamps,
-                                    y: indicators.macd_histogram,
-                                    type: 'bar',
-                                    name: 'MACD Histogram',
-                                    yaxis: 'y4',
-                                    marker: { color: 'rgba(96, 125, 139, 0.6)' }
-                                });
-                            }
-                        }
-
-                        // Add volume trace
-                        chartData.push({
-                            x: data.data.timestamps,
-                            y: data.data.volume,
-                            type: 'bar',
-                            name: 'Volume',
-                            yaxis: 'y2',
-                            marker: {
-                                color: 'rgba(102, 126, 234, 0.3)',
-                                line: {
-                                    color: 'rgba(102, 126, 234, 0.8)',
-                                    width: 1
-                                }
-                            }
-                        });
-
-                        const layout = {
-                            title: {
-                                text: `XBTMYR Technical Analysis Chart (${data.data.timeframe} - ${data.data.interval})`,
-                                font: { size: 16, color: '#333' }
-                            },
-                            xaxis: {
-                                title: 'Time',
-                                rangeslider: { visible: false },
-                                type: 'date',
-                                domain: [0, 1]
-                            },
-                            // Main price chart (top 50%)
-                            yaxis: {
-                                title: 'Price (MYR)',
-                                domain: [0.6, 1],
-                                side: 'left'
-                            },
-                            // Volume chart (10%)
-                            yaxis2: {
-                                title: 'Volume',
-                                domain: [0.48, 0.58],
-                                side: 'right'
-                            },
-                            // RSI chart (15%)
-                            yaxis3: {
-                                title: 'RSI',
-                                domain: [0.3, 0.46],
-                                side: 'left',
-                                range: [0, 100]
-                            },
-                            // MACD chart (bottom 25%)
-                            yaxis4: {
-                                title: 'MACD',
-                                domain: [0, 0.28],
-                                side: 'left'
-                            },
-                            margin: { t: 60, r: 50, b: 50, l: 80 },
-                            plot_bgcolor: 'rgba(0,0,0,0)',
-                            paper_bgcolor: 'rgba(0,0,0,0)',
-                            font: { family: 'Segoe UI, sans-serif' },
-                            showlegend: true,
-                            legend: {
-                                x: 0,
-                                y: 1,
-                                bgcolor: 'rgba(255, 255, 255, 0.9)',
-                                bordercolor: 'rgba(0, 0, 0, 0.1)',
-                                borderwidth: 1
-                            },
-                            hovermode: 'x unified'
-                        };
-
-                        const plotConfig = {
-                            responsive: true,
-                            displayModeBar: true,
-                            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
-                            displaylogo: false
-                        };
-
-                        Plotly.newPlot('price-chart', chartData, layout, plotConfig);
-                        
-                        // Add current indicator values display
-                        if (indicators.rsi || indicators.ema_short || indicators.macd_line) {
-                            const currentValues = [];
-                            
-                            if (indicators.rsi && indicators.rsi.length > 0) {
-                                const currentRSI = indicators.rsi[indicators.rsi.length - 1];
-                                currentValues.push(`RSI: ${currentRSI?.toFixed(1) || 'N/A'}`);
-                            }
-                            
-                            if (indicators.ema_short && indicators.ema_short.length > 0) {
-                                const currentEMAShort = indicators.ema_short[indicators.ema_short.length - 1];
-                                currentValues.push(`EMA${config.ema_short}: ${currentEMAShort?.toFixed(2) || 'N/A'}`);
-                            }
-                            
-                            if (indicators.ema_long && indicators.ema_long.length > 0) {
-                                const currentEMALong = indicators.ema_long[indicators.ema_long.length - 1];
-                                currentValues.push(`EMA${config.ema_long}: ${currentEMALong?.toFixed(2) || 'N/A'}`);
-                            }
-                            
-                            if (indicators.macd_line && indicators.macd_line.length > 0) {
-                                const currentMACD = indicators.macd_line[indicators.macd_line.length - 1];
-                                currentValues.push(`MACD: ${currentMACD?.toFixed(4) || 'N/A'}`);
-                            }
-                            
-                            // Display current values
-                            if (currentValues.length > 0) {
-                                const valuesHtml = `
-                                    <div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.9em;">
-                                        <strong>Current Indicators:</strong> ${currentValues.join(' | ')}
-                                    </div>
-                                `;
-                                document.getElementById('price-chart').insertAdjacentHTML('afterend', valuesHtml);
-                            }
-                        }
-                        
                     } else {
                         // Handle error case
                         console.error('Error fetching chart data:', data.error);
-                        document.getElementById('price-chart').innerHTML = `
-                            <div style="text-align: center; padding: 50px; color: #666;">
-                                <h4>Unable to load chart data</h4>
-                                <p>${data.error}</p>
-                                <button onclick="updateChart()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                    Retry
-                                </button>
-                            </div>
-                        `;
+                        displayChartError(data.error);
                     }
                 })
                 .catch(error => {
                     console.error('Error updating chart:', error);
-                    document.getElementById('price-chart').innerHTML = `
-                        <div style="text-align: center; padding: 50px; color: #666;">
-                            <h4>Network Error</h4>
-                            <p>Failed to fetch chart data</p>
-                            <button onclick="updateChart()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                                Retry
-                            </button>
-                        </div>
-                    `;
+                    displayChartError('Failed to fetch chart data');
                 });
+        }
+
+        function displayChartError(errorMessage) {
+            document.getElementById('tradingview-chart').innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #666;">
+                    <h4>Unable to load chart</h4>
+                    <p>${errorMessage}</p>
+                    <button onclick="refreshTradingViewChart()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+
+        function displayIndicatorValues(indicators, config) {
+            const currentValues = [];
+
+            // Handle both array format (from old API) and direct value format (from new API)
+            if (indicators.current_rsi !== undefined) {
+                currentValues.push(`RSI: ${indicators.current_rsi?.toFixed(1) || 'N/A'}`);
+            } else if (indicators.rsi && indicators.rsi.length > 0) {
+                const currentRSI = indicators.rsi[indicators.rsi.length - 1];
+                currentValues.push(`RSI: ${currentRSI?.toFixed(1) || 'N/A'}`);
+            }
+
+            if (indicators.current_ema_short !== undefined) {
+                currentValues.push(`EMA${config.ema_short}: ${indicators.current_ema_short?.toFixed(2) || 'N/A'}`);
+            } else if (indicators.ema_short && indicators.ema_short.length > 0) {
+                const currentEMAShort = indicators.ema_short[indicators.ema_short.length - 1];
+                currentValues.push(`EMA${config.ema_short}: ${currentEMAShort?.toFixed(2) || 'N/A'}`);
+            }
+
+            if (indicators.current_ema_long !== undefined) {
+                currentValues.push(`EMA${config.ema_long}: ${indicators.current_ema_long?.toFixed(2) || 'N/A'}`);
+            } else if (indicators.ema_long && indicators.ema_long.length > 0) {
+                const currentEMALong = indicators.ema_long[indicators.ema_long.length - 1];
+                currentValues.push(`EMA${config.ema_long}: ${currentEMALong?.toFixed(2) || 'N/A'}`);
+            }
+
+            if (indicators.macd_line && indicators.macd_line.length > 0) {
+                const currentMACD = indicators.macd_line[indicators.macd_line.length - 1];
+                currentValues.push(`MACD: ${currentMACD?.toFixed(4) || 'N/A'}`);
+            }
+
+            // Display current values
+            if (currentValues.length > 0) {
+                // Remove existing indicator display
+                const existingDisplay = document.querySelector('.indicator-values');
+                if (existingDisplay) {
+                    existingDisplay.remove();
+                }
+
+                const valuesHtml = `
+                    <div class="indicator-values" style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.9em;">
+                        <strong>Current Indicators:</strong> ${currentValues.join(' | ')}
+                    </div>
+                `;
+                document.getElementById('tradingview-chart').insertAdjacentHTML('afterend', valuesHtml);
+            }
         }
 
         function toggleTradingMode() {
