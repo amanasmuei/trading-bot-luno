@@ -27,6 +27,9 @@ class TradingDashboard:
         self.client = LunoAPIClient(config.api_key, config.api_secret)
         self.app = app
 
+        # Create/update dashboard template files
+        create_dashboard_files()
+
         # Setup routes
         self._setup_routes()
 
@@ -35,7 +38,8 @@ class TradingDashboard:
 
         @self.app.route("/")
         def dashboard():
-            return render_template("dashboard.html")
+            # Return the dashboard HTML directly instead of using template file
+            return DASHBOARD_HTML
 
         @self.app.route("/api/market_data")
         def get_market_data():
@@ -209,6 +213,13 @@ class TradingDashboard:
             except Exception as e:
                 return jsonify({"success": False, "error": str(e)})
 
+        @self.app.route("/health")
+        def health_check():
+            """Health check endpoint for Docker"""
+            return jsonify(
+                {"status": "healthy", "timestamp": datetime.now().isoformat()}
+            )
+
         @self.app.route("/api/bot_status")
         def get_bot_status():
             """Get bot status"""
@@ -311,44 +322,91 @@ DASHBOARD_HTML = """
         }
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 20px;
         }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (min-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
         .card {
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
         }
         .card h3 {
             margin-top: 0;
+            margin-bottom: 20px;
             color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .status-indicator {
             display: inline-block;
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            margin-right: 8px;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
         }
         .status-running { background-color: #4CAF50; }
         .status-stopped { background-color: #f44336; }
         .price-display {
-            font-size: 2em;
+            font-size: 2.5em;
             font-weight: bold;
-            color: #333;
+            color: #667eea;
             text-align: center;
             margin: 20px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .metric {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
+            align-items: center;
+            margin: 12px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            font-weight: 500;
+            color: #666;
+        }
+        .metric-value {
+            font-weight: 600;
+            color: #333;
         }
         .trades-list {
             max-height: 300px;
@@ -462,16 +520,16 @@ DASHBOARD_HTML = """
                         
                         configEl.innerHTML = `
                             <div class="metric">
-                                <span>Trading Pair:</span>
-                                <span>${data.data.config.trading_pair}</span>
+                                <span class="metric-label">Trading Pair:</span>
+                                <span class="metric-value">${data.data.config.trading_pair}</span>
                             </div>
                             <div class="metric">
-                                <span>Mode:</span>
-                                <span>${data.data.config.dry_run ? 'Simulation' : 'Live'}</span>
+                                <span class="metric-label">Mode:</span>
+                                <span class="metric-value">${data.data.config.dry_run ? '🎭 Simulation' : '💰 Live'}</span>
                             </div>
                             <div class="metric">
-                                <span>Position Size:</span>
-                                <span>${data.data.config.max_position_size}%</span>
+                                <span class="metric-label">Position Size:</span>
+                                <span class="metric-value">${data.data.config.max_position_size}%</span>
                             </div>
                         `;
                     }
@@ -491,16 +549,16 @@ DASHBOARD_HTML = """
                         
                         metricsEl.innerHTML = `
                             <div class="metric">
-                                <span>Bid:</span>
-                                <span>${data.data.bid.toLocaleString()} MYR</span>
+                                <span class="metric-label">💰 Bid:</span>
+                                <span class="metric-value">${data.data.bid.toLocaleString()} MYR</span>
                             </div>
                             <div class="metric">
-                                <span>Ask:</span>
-                                <span>${data.data.ask.toLocaleString()} MYR</span>
+                                <span class="metric-label">💸 Ask:</span>
+                                <span class="metric-value">${data.data.ask.toLocaleString()} MYR</span>
                             </div>
                             <div class="metric">
-                                <span>24h Volume:</span>
-                                <span>${data.data.volume.toFixed(2)} BTC</span>
+                                <span class="metric-label">📊 24h Volume:</span>
+                                <span class="metric-value">${data.data.volume.toFixed(2)} BTC</span>
                             </div>
                         `;
                     }
