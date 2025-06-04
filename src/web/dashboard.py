@@ -63,108 +63,112 @@ class TradingDashboard:
 
         @self.app.route("/api/price_chart")
         def get_price_chart():
-            """Get price chart data"""
+            """Get candlestick chart data with user-selectable timeframe and interval"""
             try:
-                # Get timeframe and duration from query parameters
-                timeframe = request.args.get("timeframe", "7d")  # Default 7 days
-                candle_duration = int(
-                    request.args.get("duration", "3600")
-                )  # Default 1h candles
+                # Get timeframe and interval from query parameters
+                timeframe = request.args.get("timeframe", "1d")  # Default 1 day
+                interval = request.args.get("interval", "5m")  # Default 5 minutes
 
-                # Map timeframes to days and appropriate candle durations
-                timeframe_map = {
-                    "1h": {"days": 1 / 24, "duration": 300},  # 1 hour, 5min candles
-                    "4h": {"days": 4 / 24, "duration": 300},  # 4 hours, 5min candles
-                    "1d": {"days": 1, "duration": 900},  # 1 day, 15min candles
-                    "3d": {"days": 3, "duration": 3600},  # 3 days, 1h candles
-                    "7d": {"days": 7, "duration": 3600},  # 7 days, 1h candles
-                    "30d": {"days": 30, "duration": 14400},  # 30 days, 4h candles
-                    "90d": {"days": 90, "duration": 86400},  # 90 days, 1d candles
+                # Map intervals to Luno candle durations (in seconds)
+                interval_map = {
+                    "1m": 60,
+                    "5m": 300,
+                    "15m": 900,
+                    "30m": 1800,
+                    "1h": 3600,
+                    "4h": 14400,
+                    "1d": 86400,
                 }
 
-                if timeframe in timeframe_map:
-                    days = timeframe_map[timeframe]["days"]
-                    candle_duration = timeframe_map[timeframe]["duration"]
-                else:
-                    days = 7
-                    candle_duration = 3600
+                # Map timeframes to days
+                timeframe_map = {
+                    "1h": 1 / 24,
+                    "4h": 4 / 24,
+                    "12h": 0.5,
+                    "1d": 1,
+                    "3d": 3,
+                    "1w": 7,
+                    "2w": 14,
+                    "1m": 30,
+                    "3m": 90,
+                }
 
+                # Get the duration in seconds and days
+                candle_duration = interval_map.get(interval, 300)  # Default 5min
+                days = timeframe_map.get(timeframe, 1)  # Default 1 day
+
+                # Calculate since timestamp
                 since = int((datetime.now() - timedelta(days=days)).timestamp() * 1000)
 
-                # DEBUG: Log the calculated timestamp and request details
-                logger.info(f"DEBUG: Requesting candles for {self.config.trading_pair}")
-                logger.info(f"DEBUG: Since timestamp: {since}")
-                logger.info(f"DEBUG: Since date: {datetime.fromtimestamp(since/1000)}")
-                logger.info(f"DEBUG: Current time: {datetime.now()}")
+                logger.info(
+                    f"Requesting candles: pair={self.config.trading_pair}, interval={interval}({candle_duration}s), timeframe={timeframe}({days} days)"
+                )
 
-                # Try to get candles data with fallback strategy
-                candles_data = None
+                # Try to get candles data with progressive fallback
                 candles = []
+                fallback_attempts = [
+                    {
+                        "days": days,
+                        "duration": candle_duration,
+                        "name": f"{timeframe} with {interval}",
+                    },
+                    {"days": 1, "duration": 3600, "name": "1 day with 1h"},
+                    {"days": 0.5, "duration": 1800, "name": "12h with 30min"},
+                    {"days": 0.25, "duration": 900, "name": "6h with 15min"},
+                ]
 
-                # First attempt with selected timeframe
-                try:
-                    candles_data = self.client.get_candles(
-                        self.config.trading_pair, candle_duration, since
-                    )
-                    candles = candles_data.get("candles", [])
-                    logger.info(
-                        f"DEBUG: Successfully got {len(candles)} candles from 7 days ago"
-                    )
-                except Exception as e:
-                    logger.warning(f"DEBUG: 7-day request failed: {e}")
-
-                    # Fallback 1: Try 1 day ago
+                for attempt in fallback_attempts:
                     try:
-                        since_1day = int(
-                            (datetime.now() - timedelta(days=1)).timestamp() * 1000
+                        since_attempt = int(
+                            (
+                                datetime.now() - timedelta(days=attempt["days"])
+                            ).timestamp()
+                            * 1000
                         )
-                        logger.info(
-                            f"DEBUG: Trying fallback with 1 day ago: {since_1day}"
-                        )
+                        logger.info(f"Trying: {attempt['name']}")
+
                         candles_data = self.client.get_candles(
-                            self.config.trading_pair, candle_duration, since_1day
+                            self.config.trading_pair, attempt["duration"], since_attempt
                         )
                         candles = candles_data.get("candles", [])
-                        logger.info(f"DEBUG: Fallback 1-day got {len(candles)} candles")
-                    except Exception as e2:
-                        logger.warning(f"DEBUG: 1-day fallback failed: {e2}")
 
-                        # Fallback 2: Try 12 hours ago
-                        try:
-                            since_12h = int(
-                                (datetime.now() - timedelta(hours=12)).timestamp()
-                                * 1000
-                            )
+                        if candles:
                             logger.info(
-                                f"DEBUG: Trying fallback with 12 hours ago: {since_12h}"
+                                f"Success: Got {len(candles)} candles with {attempt['name']}"
                             )
-                            candles_data = self.client.get_candles(
-                                self.config.trading_pair, candle_duration, since_12h
-                            )
-                            candles = candles_data.get("candles", [])
-                            logger.info(
-                                f"DEBUG: Fallback 12-hour got {len(candles)} candles"
-                            )
-                        except Exception as e3:
-                            logger.error(f"DEBUG: All fallback attempts failed: {e3}")
-                            candles = []
+                            break
+                        else:
+                            logger.warning(f"No candles returned for {attempt['name']}")
 
-                # Create chart data
+                    except Exception as e:
+                        logger.warning(f"Failed {attempt['name']}: {e}")
+                        continue
+
+                if not candles:
+                    logger.error("All fallback attempts failed")
+                    return jsonify(
+                        {"success": False, "error": "No candle data available"}
+                    )
+
+                # Create candlestick chart data
                 chart_data = {
                     "timestamps": [
                         datetime.fromtimestamp(c["timestamp"] / 1000).isoformat()
                         for c in candles
                     ],
-                    "prices": [float(c["close"]) for c in candles],
-                    "volumes": [float(c["volume"]) for c in candles],
-                    "highs": [float(c["high"]) for c in candles],
-                    "lows": [float(c["low"]) for c in candles],
-                    "opens": [float(c["open"]) for c in candles],
+                    "open": [float(c["open"]) for c in candles],
+                    "high": [float(c["high"]) for c in candles],
+                    "low": [float(c["low"]) for c in candles],
+                    "close": [float(c["close"]) for c in candles],
+                    "volume": [float(c["volume"]) for c in candles],
+                    "timeframe": timeframe,
+                    "interval": interval,
                 }
 
                 return jsonify({"success": True, "data": chart_data})
 
             except Exception as e:
+                logger.error(f"Error in get_price_chart: {e}")
                 return jsonify({"success": False, "error": str(e)})
 
         @self.app.route("/api/portfolio")
@@ -425,7 +429,38 @@ DASHBOARD_HTML = """
         }
         .chart-container {
             grid-column: 1 / -1;
-            height: 400px;
+            height: 700px;
+            min-height: 700px;
+        }
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .control-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #555;
+        }
+        .control-group select {
+            padding: 8px 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 0.9em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
         }
         .refresh-btn {
             background: #667eea;
@@ -434,10 +469,22 @@ DASHBOARD_HTML = """
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            float: right;
+            font-size: 0.9em;
+            transition: background 0.2s ease;
+            height: fit-content;
+            margin-top: 20px;
         }
         .refresh-btn:hover {
             background: #5a67d8;
+        }
+        .chart-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .chart-title h3 {
+            margin: 0;
         }
     </style>
 </head>
@@ -479,10 +526,38 @@ DASHBOARD_HTML = """
 
         <!-- Price Chart -->
         <div class="card chart-container">
-            <h3>
-                Price Chart (7-day)
+            <div class="chart-title">
+                <h3>Candlestick Chart</h3>
                 <button class="refresh-btn" onclick="updateChart()">Refresh</button>
-            </h3>
+            </div>
+            <div class="chart-controls">
+                <div class="control-group">
+                    <label for="timeframe-select">Timeframe:</label>
+                    <select id="timeframe-select" onchange="updateChart()">
+                        <option value="1h">1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="12h">12 Hours</option>
+                        <option value="1d" selected>1 Day</option>
+                        <option value="3d">3 Days</option>
+                        <option value="1w">1 Week</option>
+                        <option value="2w">2 Weeks</option>
+                        <option value="1m">1 Month</option>
+                        <option value="3m">3 Months</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="interval-select">Interval:</label>
+                    <select id="interval-select" onchange="updateChart()">
+                        <option value="1m">1 Minute</option>
+                        <option value="5m" selected>5 Minutes</option>
+                        <option value="15m">15 Minutes</option>
+                        <option value="30m">30 Minutes</option>
+                        <option value="1h">1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="1d">1 Day</option>
+                    </select>
+                </div>
+            </div>
             <div id="price-chart"></div>
         </div>
     </div>
@@ -624,30 +699,120 @@ DASHBOARD_HTML = """
         }
 
         function updateChart() {
-            fetch('/api/price_chart')
+            // Get selected timeframe and interval
+            const timeframe = document.getElementById('timeframe-select').value;
+            const interval = document.getElementById('interval-select').value;
+            
+            // Build API URL with parameters
+            const apiUrl = `/api/price_chart?timeframe=${timeframe}&interval=${interval}`;
+            
+            fetch(apiUrl)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        const chartData = [{
+                        // Create candlestick chart
+                        const candlestickTrace = {
                             x: data.data.timestamps,
-                            y: data.data.prices,
-                            type: 'scatter',
-                            mode: 'lines',
-                            name: 'Price',
-                            line: { color: '#667eea', width: 2 }
-                        }];
-
-                        const layout = {
-                            title: 'XBTMYR Price Movement',
-                            xaxis: { title: 'Time' },
-                            yaxis: { title: 'Price (MYR)' },
-                            margin: { t: 50, r: 50, b: 50, l: 80 }
+                            open: data.data.open,
+                            high: data.data.high,
+                            low: data.data.low,
+                            close: data.data.close,
+                            type: 'candlestick',
+                            name: 'XBTMYR',
+                            increasing: {
+                                line: { color: '#26a69a' },
+                                fillcolor: '#26a69a'
+                            },
+                            decreasing: {
+                                line: { color: '#ef5350' },
+                                fillcolor: '#ef5350'
+                            }
                         };
 
-                        Plotly.newPlot('price-chart', chartData, layout, {responsive: true});
+                        // Create volume trace (as bar chart below)
+                        const volumeTrace = {
+                            x: data.data.timestamps,
+                            y: data.data.volume,
+                            type: 'bar',
+                            name: 'Volume',
+                            yaxis: 'y2',
+                            marker: {
+                                color: 'rgba(102, 126, 234, 0.3)',
+                                line: {
+                                    color: 'rgba(102, 126, 234, 0.8)',
+                                    width: 1
+                                }
+                            }
+                        };
+
+                        const chartData = [candlestickTrace, volumeTrace];
+
+                        const layout = {
+                            title: {
+                                text: `XBTMYR Candlestick Chart (${data.data.timeframe} - ${data.data.interval} intervals)`,
+                                font: { size: 16, color: '#333' }
+                            },
+                            xaxis: {
+                                title: 'Time',
+                                rangeslider: { visible: false }, // Disable range slider for cleaner look
+                                type: 'date'
+                            },
+                            yaxis: {
+                                title: 'Price (MYR)',
+                                domain: [0.3, 1], // Price chart takes top 70%
+                                side: 'left'
+                            },
+                            yaxis2: {
+                                title: 'Volume',
+                                domain: [0, 0.25], // Volume chart takes bottom 25%
+                                side: 'right'
+                            },
+                            margin: { t: 60, r: 50, b: 50, l: 80 },
+                            plot_bgcolor: 'rgba(0,0,0,0)',
+                            paper_bgcolor: 'rgba(0,0,0,0)',
+                            font: { family: 'Segoe UI, sans-serif' },
+                            showlegend: true,
+                            legend: {
+                                x: 0,
+                                y: 1,
+                                bgcolor: 'rgba(255, 255, 255, 0.8)'
+                            }
+                        };
+
+                        const config = {
+                            responsive: true,
+                            displayModeBar: true,
+                            modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'autoScale2d'],
+                            displaylogo: false
+                        };
+
+                        Plotly.newPlot('price-chart', chartData, layout, config);
+                    } else {
+                        // Handle error case
+                        console.error('Error fetching chart data:', data.error);
+                        document.getElementById('price-chart').innerHTML = `
+                            <div style="text-align: center; padding: 50px; color: #666;">
+                                <h4>Unable to load chart data</h4>
+                                <p>${data.error}</p>
+                                <button onclick="updateChart()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Retry
+                                </button>
+                            </div>
+                        `;
                     }
                 })
-                .catch(error => console.error('Error updating chart:', error));
+                .catch(error => {
+                    console.error('Error updating chart:', error);
+                    document.getElementById('price-chart').innerHTML = `
+                        <div style="text-align: center; padding: 50px; color: #666;">
+                            <h4>Network Error</h4>
+                            <p>Failed to fetch chart data</p>
+                            <button onclick="updateChart()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                });
         }
     </script>
 </body>
