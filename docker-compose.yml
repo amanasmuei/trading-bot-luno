@@ -40,6 +40,7 @@ services:
       - BOT_HOST=luno-enhanced-bot
       - BOT_PORT=5002
       - DOCKER_ENV=true
+      - DASHBOARD_HOST=0.0.0.0
     restart: unless-stopped
     depends_on:
       - luno-enhanced-bot
