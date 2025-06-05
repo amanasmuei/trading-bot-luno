@@ -486,9 +486,10 @@ class EnhancedTradingBot:
             return
 
         # Calculate position size
-        portfolio_value = self.portfolio.get_portfolio_value(
+        portfolio_data = self.portfolio.get_portfolio_value(
             market_data["current_price"]
         )
+        portfolio_value = portfolio_data.get("total_value", 0.0)
         volume = self.risk_manager.calculate_position_size(
             signal, portfolio_value, market_data["current_price"]
         )
@@ -697,7 +698,8 @@ class EnhancedTradingBot:
 
         if not self.config.dry_run:
             try:
-                portfolio_value = self.portfolio.get_portfolio_value(460000)
+                portfolio_data = self.portfolio.get_portfolio_value(460000)
+                portfolio_value = portfolio_data.get("total_value", 0.0)
                 logger.info(f"Portfolio value: {portfolio_value}")
             except:
                 logger.info("Portfolio value: Unable to calculate")

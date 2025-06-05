@@ -447,9 +447,10 @@ class TradingBot:
         logger.info(f"Take profit: {self.config.take_profit_percent}%")
 
         if not self.config.dry_run:
-            portfolio_value = self.portfolio.get_portfolio_value(
+            portfolio_data = self.portfolio.get_portfolio_value(
                 460000
             )  # Approximate current price
+            portfolio_value = portfolio_data.get("total_value", 0.0)
             logger.info(f"Portfolio value: {portfolio_value}")
 
     def _log_market_state(self, indicators: TechnicalIndicators, signals: Dict):
