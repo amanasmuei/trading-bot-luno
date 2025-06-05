@@ -21,12 +21,12 @@ COPY . .
 # Create logs directory with proper permissions
 RUN mkdir -p logs && chmod 755 logs
 
-# Create non-root user for security
-RUN useradd -m -u 1000 trader && chown -R trader:trader /app
-USER trader
+# Create logs directory and set permissions before switching user
+RUN mkdir -p /app/logs /app/enhanced_reports && \
+    useradd -m -u 1000 trader && \
+    chown -R trader:trader /app
 
-# Ensure logs directory is writable by the trader user
-RUN chmod 755 logs && touch logs/trading_bot.log && chmod 666 logs/trading_bot.log
+USER trader
 
 # Expose dashboard port
 EXPOSE 5001

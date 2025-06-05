@@ -25,8 +25,11 @@ RUN pip install --no-cache-dir \
 # Copy application code
 COPY . .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 trader && chown -R trader:trader /app
+# Create logs directory and set permissions before switching user
+RUN mkdir -p /app/logs /app/enhanced_reports && \
+    useradd -m -u 1000 trader && \
+    chown -R trader:trader /app
+
 USER trader
 
 # Expose dashboard port
