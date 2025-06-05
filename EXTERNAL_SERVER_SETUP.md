@@ -29,6 +29,9 @@ BOT_PORT=5002
 
 ### Option 1: Docker Compose (Recommended)
 ```bash
+# Fix permissions first (important for external servers)
+./fix_permissions.sh
+
 # Start the enhanced bot with dashboard
 docker-compose up -d
 
@@ -221,7 +224,20 @@ BOT_CHECK_INTERVAL=30
 ### Issue: "Dashboard Shows No Data"
 **Solution:** Ensure the trading bot is running and accessible on port 5002
 
-### Issue: "Permission Denied"
+### Issue: "Permission Denied" for Log Files
+**Problem:** You see warnings like:
+```
+⚠️  Warning: Cannot write to log file: [Errno 13] Permission denied: '/app/logs/trading_bot.log'
+```
+
+**Solution:** Run the permission fix script before starting containers:
+```bash
+./fix_permissions.sh
+docker-compose down
+docker-compose up -d
+```
+
+### Issue: "Permission Denied" for Ports
 **Solution:** Check if ports are available and not used by other services
 
 ## 📞 Support
