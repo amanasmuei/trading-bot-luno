@@ -37,6 +37,9 @@ services:
       - ./.env:/app/.env:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - BOT_HOST=luno-enhanced-bot
+      - BOT_PORT=5002
+      - DOCKER_ENV=true
     restart: unless-stopped
     depends_on:
       - luno-enhanced-bot

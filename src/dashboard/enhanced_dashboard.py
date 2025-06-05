@@ -67,8 +67,16 @@ class EnhancedDashboard:
     """Enhanced Trading Bot Dashboard"""
 
     def __init__(self):
-        self.bot_health_url = "http://localhost:5002/health"
-        self.bot_status_url = "http://localhost:5002/status"
+        # Get bot connection details from environment variables
+        bot_host = os.getenv("BOT_HOST", "localhost")
+        bot_port = os.getenv("BOT_PORT", "5002")
+
+        # Support Docker container names
+        if bot_host == "localhost" and os.getenv("DOCKER_ENV"):
+            bot_host = "luno-enhanced-bot"  # Docker container name
+
+        self.bot_health_url = f"http://{bot_host}:{bot_port}/health"
+        self.bot_status_url = f"http://{bot_host}:{bot_port}/status"
 
     def check_bot_health(self) -> Dict:
         """Check if the enhanced trading bot is running"""

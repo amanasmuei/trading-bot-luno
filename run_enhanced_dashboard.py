@@ -18,9 +18,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Enhanced bot endpoints
-BOT_HEALTH_URL = "http://localhost:5002/health"
-BOT_STATUS_URL = "http://localhost:5002/status"
+# Enhanced bot endpoints - configurable via environment variables
+BOT_HOST = os.getenv("BOT_HOST", "localhost")
+BOT_PORT = os.getenv("BOT_PORT", "5002")
+
+# Support Docker container names
+if BOT_HOST == "localhost" and os.getenv("DOCKER_ENV"):
+    BOT_HOST = "luno-enhanced-bot"  # Docker container name
+
+BOT_HEALTH_URL = f"http://{BOT_HOST}:{BOT_PORT}/health"
+BOT_STATUS_URL = f"http://{BOT_HOST}:{BOT_PORT}/status"
 
 # Simple HTML template for the dashboard
 DASHBOARD_TEMPLATE = """
@@ -268,12 +275,14 @@ DASHBOARD_TEMPLATE = """
 </html>
 """
 
-@app.route('/')
+
+@app.route("/")
 def dashboard():
     """Main dashboard page"""
     return render_template_string(DASHBOARD_TEMPLATE)
 
-@app.route('/api/bot_status')
+
+@app.route("/api/bot_status")
 def bot_status():
     """Get bot status from the enhanced trading bot"""
     try:
@@ -285,36 +294,41 @@ def bot_status():
     except requests.exceptions.RequestException as e:
         return jsonify({"success": False, "error": str(e)})
 
-@app.route('/api/reports')
+
+@app.route("/api/reports")
 def reports():
     """Get trading reports"""
     try:
         reports_list = []
         reports_dir = "enhanced_reports"
-        
+
         if os.path.exists(reports_dir):
             for filename in sorted(os.listdir(reports_dir), reverse=True)[:10]:
-                if filename.endswith('.json'):
+                if filename.endswith(".json"):
                     filepath = os.path.join(reports_dir, filename)
                     try:
-                        with open(filepath, 'r') as f:
+                        with open(filepath, "r") as f:
                             report = json.load(f)
                             reports_list.append(report)
                     except Exception as e:
                         logger.error(f"Error reading report {filename}: {e}")
-        
+
         return jsonify({"success": True, "reports": reports_list})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-@app.route('/health')
+
+@app.route("/health")
 def health():
     """Health check endpoint"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "enhanced-dashboard"
-    })
+    return jsonify(
+        {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "service": "enhanced-dashboard",
+        }
+    )
+
 
 def main():
     """Main function"""
@@ -322,7 +336,7 @@ def main():
     print("📊 Dashboard will be available at: http://localhost:5003")
     print("🔗 Bot health check: http://localhost:5002/health")
     print("⏯️  Press Ctrl+C to stop the dashboard")
-    
+
     # Check if bot is running
     try:
         response = requests.get(BOT_HEALTH_URL, timeout=5)
@@ -333,9 +347,10 @@ def main():
     except:
         print("❌ Error: Cannot connect to enhanced trading bot")
         print("   Make sure the enhanced bot is running on port 5002")
-    
+
     # Start the dashboard
-    app.run(host='0.0.0.0', port=5003, debug=False)
+    app.run(host="0.0.0.0", port=5003, debug=False)
+
 
 if __name__ == "__main__":
     main()

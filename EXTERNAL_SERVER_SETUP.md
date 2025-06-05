@@ -8,13 +8,21 @@ The dashboard was not accessible from external servers because it was binding to
 ### 1. **Default Host Binding Fixed**
 The dashboard now binds to `0.0.0.0` by default, allowing external access.
 
-### 2. **Environment Variable Configuration**
-You can now control the dashboard host and port via environment variables:
+### 2. **Container Communication Fixed**
+The dashboard can now properly connect to the bot in different deployment scenarios:
+- **Docker Compose**: Uses container names for communication
+- **Separate containers**: Uses environment variables
+- **Local development**: Falls back to localhost
+
+### 3. **Environment Variable Configuration**
+You can now control both dashboard and bot connection via environment variables:
 
 ```bash
 # In your .env file
 DASHBOARD_HOST=0.0.0.0
-DASHBOARD_PORT=5001
+DASHBOARD_PORT=5003
+BOT_HOST=localhost  # or container name in Docker
+BOT_PORT=5002
 ```
 
 ## 🚀 Deployment Options
