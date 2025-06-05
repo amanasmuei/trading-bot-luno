@@ -19,7 +19,7 @@ services:
       - BOT_MODE=enhanced
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5002/health\")' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,28 +40,11 @@ services:
     restart: unless-stopped
     profiles: ["original"]  # Only start if specifically requested
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5001/health\")' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Enhanced Dashboard Service
-  enhanced-dashboard:
-    build:
-      context: .
-      dockerfile: Dockerfile.dashboard
-    container_name: enhanced-dashboard
-    ports:
-      - "5003:5003"
-    volumes:
-      - ./logs:/app/logs:ro
-      - ./enhanced_reports:/app/enhanced_reports:ro
-    environment:
-      - DASHBOARD_MODE=enhanced
-    restart: unless-stopped
-    depends_on:
-      - luno-enhanced-bot
 
   # Optional: Redis for caching (improves performance)
   redis:
