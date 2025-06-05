@@ -85,6 +85,12 @@ class EnhancedTradingConfig:
     dry_run: bool = True  # Start in simulation mode
     log_level: str = "INFO"
 
+    # Dashboard Configuration
+    dashboard_host: str = os.getenv(
+        "DASHBOARD_HOST", "0.0.0.0"
+    )  # Allow external access by default
+    dashboard_port: int = int(os.getenv("DASHBOARD_PORT", "5003"))
+
     # Backtesting and Performance
     track_performance: bool = True
     save_trade_history: bool = True

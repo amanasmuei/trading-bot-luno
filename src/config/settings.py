@@ -46,6 +46,12 @@ class TradingConfig:
     dry_run: bool = True  # Start in simulation mode
     log_level: str = "INFO"
 
+    # Dashboard Configuration
+    dashboard_host: str = os.getenv(
+        "DASHBOARD_HOST", "0.0.0.0"
+    )  # Allow external access by default
+    dashboard_port: int = int(os.getenv("DASHBOARD_PORT", "5001"))
+
     def __post_init__(self):
         """Initialize default values after dataclass creation"""
         # Parse trading pair to extract base and counter currencies
