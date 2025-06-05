@@ -333,8 +333,22 @@ def health():
 def main():
     """Main function"""
     print("🚀 Starting Enhanced Trading Bot Dashboard...")
-    print("📊 Dashboard will be available at: http://localhost:5003")
-    print("🔗 Bot health check: http://localhost:5002/health")
+
+    # Get server IP for better display
+    import socket
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        server_ip = s.getsockname()[0]
+        s.close()
+        print(f"📊 Dashboard will be available at:")
+        print(f"   - Local: http://localhost:5003")
+        print(f"   - Network: http://{server_ip}:5003")
+    except:
+        print("📊 Dashboard will be available at: http://localhost:5003")
+
+    print(f"🔗 Bot health check: {BOT_HEALTH_URL}")
     print("⏯️  Press Ctrl+C to stop the dashboard")
 
     # Check if bot is running

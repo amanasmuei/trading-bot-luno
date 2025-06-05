@@ -331,7 +331,35 @@ def main():
 
     # Health check endpoint
     st.sidebar.markdown("### 🔗 Health Check")
-    st.sidebar.code("http://localhost:5003/health")
+
+    # Get the actual server host for health check URL
+    dashboard_host = os.getenv("DASHBOARD_HOST", "localhost")
+    dashboard_port = os.getenv("DASHBOARD_PORT", "5003")
+
+    # If running in Docker or on external server, show proper IP
+    if dashboard_host == "0.0.0.0":
+        # Try to get the actual server IP
+        import socket
+
+        try:
+            # Get local IP address
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            server_ip = s.getsockname()[0]
+            s.close()
+            health_url = f"http://{server_ip}:{dashboard_port}/health"
+        except:
+            # Fallback to showing the host variable
+            health_url = f"http://[YOUR_SERVER_IP]:{dashboard_port}/health"
+    else:
+        health_url = f"http://{dashboard_host}:{dashboard_port}/health"
+
+    st.sidebar.code(health_url)
+
+    # Also show bot health check URL
+    st.sidebar.markdown("### 🤖 Bot Health Check")
+    bot_health_url = f"http://{os.getenv('BOT_HOST', 'localhost')}:{os.getenv('BOT_PORT', '5002')}/health"
+    st.sidebar.code(bot_health_url)
 
     # Auto-refresh logic
     if auto_refresh:
