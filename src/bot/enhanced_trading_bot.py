@@ -34,16 +34,33 @@ from src.bot.enhanced_technical_analysis import (
     MarketRegime,
 )
 from src.api.luno_client import LunoAPIClient, TradingPortfolio
+from src.bot.health_server import HealthCheckServer
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/enhanced_trading_bot.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+
+# Configure logging with error handling
+def setup_logging():
+    """Setup logging with graceful error handling for Docker permissions"""
+    handlers = [logging.StreamHandler(sys.stdout)]
+
+    # Try to add file handler, but gracefully handle permission errors
+    try:
+        import os
+
+        os.makedirs("logs", exist_ok=True)
+        file_handler = logging.FileHandler("logs/enhanced_trading_bot.log")
+        handlers.append(file_handler)
+    except (PermissionError, OSError) as e:
+        print(f"⚠️  Warning: Cannot write to log file: {e}")
+        print("📝 Logging will continue to console only")
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=handlers,
+    )
+
+
+setup_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +231,9 @@ class EnhancedTradingBot:
         self.risk_manager = EnhancedRiskManager(config)
         self.performance_tracker = PerformanceTracker(config)
 
+        # Initialize health check server
+        self.health_server = HealthCheckServer(port=5002)
+
         # Trading state
         self.last_trade_time = None
         self.current_signals_history = []
@@ -251,6 +271,9 @@ class EnhancedTradingBot:
         logger.info("Starting Enhanced Trading Bot...")
         self.running = True
 
+        # Start health check server
+        self.health_server.start()
+
         # Initial setup
         self._update_portfolio_state()
         self._log_initial_state()
@@ -270,10 +293,17 @@ class EnhancedTradingBot:
         logger.info("Stopping Enhanced Trading Bot...")
         self.running = False
 
+        # Stop health check server
+        if hasattr(self, "health_server"):
+            self.health_server.stop()
+
         # Cancel all open orders
         if not self.config.dry_run:
-            cancelled = self.portfolio.cancel_all_orders()
-            logger.info(f"Cancelled {cancelled} open orders")
+            try:
+                cancelled = self.portfolio.cancel_all_orders()
+                logger.info(f"Cancelled {cancelled} open orders")
+            except Exception as e:
+                logger.warning(f"Error cancelling orders: {e}")
 
         # Save performance report
         self._save_enhanced_performance_report()
@@ -282,6 +312,16 @@ class EnhancedTradingBot:
     def _enhanced_trading_cycle(self):
         """Execute one enhanced trading cycle"""
         try:
+            # Update health status
+            self.health_server.update_status(
+                {
+                    "last_cycle": datetime.now().isoformat(),
+                    "running": self.running,
+                    "daily_trades": self.risk_manager.daily_trades,
+                    "daily_pnl": self.risk_manager.daily_pnl,
+                }
+            )
+
             # Check daily risk limits
             if not self.risk_manager.check_daily_limits():
                 logger.info("Daily risk limits exceeded, skipping cycle")
@@ -652,8 +692,11 @@ class EnhancedTradingBot:
         logger.info(f"Min risk-reward ratio: {self.config.min_risk_reward_ratio}")
 
         if not self.config.dry_run:
-            portfolio_value = self.portfolio.get_portfolio_value(460000)
-            logger.info(f"Portfolio value: {portfolio_value}")
+            try:
+                portfolio_value = self.portfolio.get_portfolio_value(460000)
+                logger.info(f"Portfolio value: {portfolio_value}")
+            except:
+                logger.info("Portfolio value: Unable to calculate")
 
     def _log_enhanced_market_state(
         self, indicators: EnhancedTechnicalIndicators, signal: TradingSignal
@@ -716,10 +759,14 @@ class EnhancedTradingBot:
         )
 
         try:
-            with open(filename, "w") as f:
+            import os
+
+            os.makedirs("enhanced_reports", exist_ok=True)
+            filepath = f"enhanced_reports/{filename}"
+            with open(filepath, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
-            logger.info(f"Enhanced performance report saved: {filename}")
+            logger.info(f"Enhanced performance report saved: {filepath}")
 
         except Exception as e:
             logger.error(f"Failed to save enhanced performance report: {e}")
