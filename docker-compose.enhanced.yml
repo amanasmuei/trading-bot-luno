@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Enhanced Luno Trading Bot
+  luno-enhanced-bot:
+    build: 
+      context: .
+      dockerfile: Dockerfile.enhanced
+    container_name: luno-enhanced-bot
+    ports:
+      - "5002:5002"  # Different port to avoid conflicts
+    volumes:
+      - ./logs:/app/logs
+      - ./enhanced_reports:/app/enhanced_reports
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRADING_STRATEGY=enhanced
+      - BOT_MODE=enhanced
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Original Bot (for comparison/backup)
+  luno-original-bot:
+    build: .
+    container_name: luno-original-bot
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRADING_STRATEGY=original
+    restart: unless-stopped
+    profiles: ["original"]  # Only start if specifically requested
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Enhanced Dashboard Service
+  enhanced-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: enhanced-dashboard
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./logs:/app/logs:ro
+      - ./enhanced_reports:/app/enhanced_reports:ro
+    environment:
+      - DASHBOARD_MODE=enhanced
+    restart: unless-stopped
+    depends_on:
+      - luno-enhanced-bot
+
+  # Optional: Redis for caching (improves performance)
+  redis:
+    image: redis:7-alpine
+    container_name: luno-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles: ["with-cache"]
+
+  # Optional: Monitoring with Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: luno-monitoring
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    restart: unless-stopped
+    profiles: ["monitoring"]
+
+volumes:
+  redis_data:
+  grafana_data:
+
+networks:
+  default:
+    name: luno-trading-network

@@ -1,0 +1,51 @@
+# Enhanced Luno Trading Bot - Docker Container
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install additional dependencies for enhanced strategy
+RUN pip install --no-cache-dir \
+    redis \
+    psutil \
+    matplotlib \
+    seaborn
+
+# Copy application code
+COPY . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p logs enhanced_reports monitoring/grafana && \
+    chmod 755 logs enhanced_reports monitoring/grafana
+
+# Create non-root user for security
+RUN useradd -m -u 1000 trader && chown -R trader:trader /app
+USER trader
+
+# Ensure directories are writable by the trader user
+RUN chmod 755 logs enhanced_reports && \
+    touch logs/enhanced_trading_bot.log && \
+    chmod 666 logs/enhanced_trading_bot.log
+
+# Expose enhanced dashboard port
+EXPOSE 5002
+
+# Health check for enhanced bot
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5002/health || exit 1
+
+# Default command (enhanced strategy in dry run mode for safety)
+CMD ["python", "-m", "src.bot.enhanced_trading_bot"]
