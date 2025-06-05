@@ -34,7 +34,15 @@ EXPOSE 5003
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5003/health || exit 1
+    CMD curl -f http://localhost:8502/health || exit 1
 
-# Default command - enhanced dashboard
-CMD ["streamlit", "run", "src/dashboard/enhanced_dashboard.py", "--server.port=5003", "--server.address=0.0.0.0"]
+# Create startup script
+RUN echo '#!/bin/bash\n\
+    # Start health server in background\n\
+    python src/dashboard/health_server.py &\n\
+    # Start streamlit dashboard\n\
+    streamlit run src/dashboard/enhanced_dashboard.py --server.port=5003 --server.address=0.0.0.0\n\
+    ' > /app/start_dashboard.sh && chmod +x /app/start_dashboard.sh
+
+# Default command - enhanced dashboard with health server
+CMD ["/app/start_dashboard.sh"]

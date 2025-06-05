@@ -1,9 +1,56 @@
 version: '3.8'
 
 services:
-  luno-trading-bot:
+  # Enhanced Luno Trading Bot
+  luno-enhanced-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.enhanced
+    container_name: luno-enhanced-bot
+    ports:
+      - "5002:5002"  # Enhanced bot health server
+    volumes:
+      - ./logs:/app/logs
+      - ./enhanced_reports:/app/enhanced_reports
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRADING_STRATEGY=enhanced
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import requests; requests.get(\"http://localhost:5002/health\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Enhanced Dashboard
+  luno-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: luno-dashboard
+    ports:
+      - "5003:5003"  # Dashboard port
+    volumes:
+      - ./enhanced_reports:/app/enhanced_reports:ro
+      - ./.env:/app/.env:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      - luno-enhanced-bot
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Original Bot (for comparison/backup)
+  luno-original-bot:
     build: .
-    container_name: luno-trading-bot
+    container_name: luno-original-bot
     ports:
       - "5001:5001"
     volumes:
@@ -11,7 +58,9 @@ services:
       - ./.env:/app/.env:ro
     environment:
       - PYTHONUNBUFFERED=1
+      - TRADING_STRATEGY=original
     restart: unless-stopped
+    profiles: ["original"]  # Only start if specifically requested
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s

@@ -428,21 +428,25 @@ class EnhancedTradingBot:
 
         # Apply regime-specific adjustments
         if "confidence_bonus" in regime_config:
-            signal.confidence = min(
-                0.95, signal.confidence + regime_config["confidence_bonus"]
-            )
+            bonus = regime_config["confidence_bonus"]
+            if isinstance(bonus, (int, float)):
+                signal.confidence = min(0.95, signal.confidence + bonus)
         elif "confidence_penalty" in regime_config:
-            signal.confidence = max(
-                0.05, signal.confidence - regime_config["confidence_penalty"]
-            )
+            penalty = regime_config["confidence_penalty"]
+            if isinstance(penalty, (int, float)):
+                signal.confidence = max(0.05, signal.confidence - penalty)
 
         # Apply risk adjustments
         if "risk_adjustment" in regime_config:
-            signal.position_size_multiplier *= regime_config["risk_adjustment"]
+            risk_adj = regime_config["risk_adjustment"]
+            if isinstance(risk_adj, (int, float)):
+                signal.position_size_multiplier *= risk_adj
 
         # Apply position multiplier for high volatility
         if "position_multiplier" in regime_config:
-            signal.position_size_multiplier *= regime_config["position_multiplier"]
+            pos_mult = regime_config["position_multiplier"]
+            if isinstance(pos_mult, (int, float)):
+                signal.position_size_multiplier *= pos_mult
 
         return signal
 

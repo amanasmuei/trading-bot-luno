@@ -20,13 +20,25 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle GET requests"""
-        if self.path == "/health":
-            self.send_health_response()
-        elif self.path == "/status":
-            self.send_status_response()
-        else:
-            self.send_response(404)
-            self.end_headers()
+        try:
+            if self.path == "/health":
+                self.send_health_response()
+            elif self.path == "/status":
+                self.send_status_response()
+            else:
+                self.send_response(404)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Not Found")
+        except Exception as e:
+            logger.error(f"Error handling request: {e}")
+            try:
+                self.send_response(500)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Internal Server Error")
+            except:
+                pass
 
     def send_health_response(self):
         """Send basic health check response"""
@@ -37,15 +49,24 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
                 "service": "enhanced-trading-bot",
             }
 
+            response_data = json.dumps(health_data).encode("utf-8")
+
             self.send_response(200)
             self.send_header("Content-type", "application/json")
+            self.send_header("Content-Length", str(len(response_data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps(health_data).encode())
+            self.wfile.write(response_data)
 
         except Exception as e:
             logger.error(f"Health check error: {e}")
-            self.send_response(500)
-            self.end_headers()
+            try:
+                self.send_response(500)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Health check failed")
+            except:
+                pass
 
     def send_status_response(self):
         """Send detailed status response"""
@@ -54,19 +75,28 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
                 "status": "running",
                 "timestamp": datetime.now().isoformat(),
                 "service": "enhanced-trading-bot",
-                "bot_status": getattr(self, "bot_status", {}),
+                "bot_status": self.bot_status,
                 "version": "Enhanced v2.0",
             }
 
+            response_data = json.dumps(status_data, default=str).encode("utf-8")
+
             self.send_response(200)
             self.send_header("Content-type", "application/json")
+            self.send_header("Content-Length", str(len(response_data)))
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps(status_data, default=str).encode())
+            self.wfile.write(response_data)
 
         except Exception as e:
             logger.error(f"Status check error: {e}")
-            self.send_response(500)
-            self.end_headers()
+            try:
+                self.send_response(500)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Status check failed")
+            except:
+                pass
 
     def log_message(self, format, *args):
         """Override to suppress HTTP logs"""
