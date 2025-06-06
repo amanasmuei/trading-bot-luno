@@ -1,5 +1,5 @@
 """
-Web Dashboard Module
+SaaS Web Interface Module
 """
 
 from src.web.dashboard import TradingDashboard, create_dashboard_files

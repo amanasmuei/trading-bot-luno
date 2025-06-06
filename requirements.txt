@@ -24,3 +24,21 @@ cachetools==5.3.1
 redis==4.6.0
 celery==5.3.1
 APScheduler==3.10.4
+
+# SaaS Platform Dependencies
+flask-jwt-extended==4.5.2
+flask-sqlalchemy==3.0.5
+flask-migrate==4.0.5
+flask-cors==4.0.0
+flask-limiter==3.5.0
+flask-mail==0.9.1
+werkzeug==2.3.7
+bcrypt==4.0.1
+cryptography==41.0.4
+stripe==6.6.0
+marshmallow==3.20.1
+marshmallow-sqlalchemy==0.29.0
+alembic==1.12.0
+gunicorn==21.2.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4

@@ -1,0 +1,341 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Dashboard - Luno Trading Bot SaaS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Dashboard</h1>
+            <p class="text-muted">Welcome back, {{ user.first_name }}! Here's your trading overview.</p>
+        </div>
+        <div>
+            <span class="badge bg-primary">{{ stats.subscription_plan }}</span>
+            <span class="badge bg-{{ 'success' if stats.subscription_status == 'active' else 'warning' }}">
+                {{ stats.subscription_status|title }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="metric-value">{{ stats.total_bots }}</div>
+                            <div class="metric-label">Total Bots</div>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="metric-value text-success">{{ stats.active_bots }}</div>
+                            <div class="metric-label">Active Bots</div>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-play-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="metric-value">{{ stats.total_trades }}</div>
+                            <div class="metric-label">Total Trades</div>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card metric-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="metric-value {{ 'text-success' if stats.total_pnl >= 0 else 'text-danger' }}">
+                                {{ "%.2f"|format(stats.total_pnl) }} MYR
+                            </div>
+                            <div class="metric-label">Total P&L</div>
+                        </div>
+                        <div class="{{ 'text-success' if stats.total_pnl >= 0 else 'text-danger' }}">
+                            <i class="fas fa-{{ 'arrow-up' if stats.total_pnl >= 0 else 'arrow-down' }} fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Trading Bots Status -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Trading Bots</h5>
+                    <a href="{{ url_for('saas_dashboard.bots_page') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>Manage Bots
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if bots %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Bot Name</th>
+                                        <th>Status</th>
+                                        <th>Pair</th>
+                                        <th>Trades</th>
+                                        <th>P&L</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for bot in bots[:5] %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ bot.name }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="status-indicator status-{{ bot.status }}"></span>
+                                            {{ bot.status|title }}
+                                        </td>
+                                        <td>{{ bot.config.trading_pair if bot.config else 'N/A' }}</td>
+                                        <td>{{ bot.total_trades }}</td>
+                                        <td class="{{ 'text-success' if bot.total_pnl >= 0 else 'text-danger' }}">
+                                            {{ "%.2f"|format(bot.total_pnl) }} MYR
+                                        </td>
+                                        <td>
+                                            {% if bot.is_active %}
+                                                <button class="btn btn-sm btn-warning" onclick="stopBot({{ bot.id }})">
+                                                    <i class="fas fa-stop"></i>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-success" onclick="startBot({{ bot.id }})">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                            <h5>No Trading Bots</h5>
+                            <p class="text-muted">Create your first trading bot to get started.</p>
+                            <a href="{{ url_for('saas_dashboard.bots_page') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create Bot
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Account Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Subscription Plan</span>
+                            <strong>{{ stats.subscription_plan }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Account Status</span>
+                            <span class="badge bg-{{ 'success' if user.is_verified else 'warning' }}">
+                                {{ 'Verified' if user.is_verified else 'Unverified' }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Member Since</span>
+                            <span>{{ user.created_at.strftime('%B %Y') }}</span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>API Calls Used</span>
+                            <span>{{ user.api_calls_count }}/{{ user.subscription.get_feature_value('api_calls_per_hour') if user.subscription else '100' }}</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 5px;">
+                            {% set api_limit = user.subscription.get_feature_value('api_calls_per_hour')|int if user.subscription else 100 %}
+                            {% set usage_percent = (user.api_calls_count / api_limit * 100) if api_limit > 0 else 0 %}
+                            <div class="progress-bar" style="width: {{ usage_percent }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('saas_dashboard.subscription_page') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-crown me-1"></i>Upgrade Plan
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trades -->
+    {% if recent_trades %}
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Trades</h5>
+                    <a href="{{ url_for('saas_dashboard.trades_page') }}" class="btn btn-sm btn-outline-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Pair</th>
+                                    <th>Action</th>
+                                    <th>Volume</th>
+                                    <th>Price</th>
+                                    <th>P&L</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in recent_trades %}
+                                <tr>
+                                    <td>{{ trade.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ trade.pair }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if trade.action == 'BUY' else 'danger' }}">
+                                            {{ trade.action }}
+                                        </span>
+                                    </td>
+                                    <td>{{ "%.6f"|format(trade.volume) }}</td>
+                                    <td>{{ "%.2f"|format(trade.price) }} MYR</td>
+                                    <td class="{{ 'text-success' if trade.pnl >= 0 else 'text-danger' }}">
+                                        {{ "%.2f"|format(trade.pnl) }} MYR
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh dashboard data
+let refreshInterval;
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(refreshDashboard, 30000); // 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+async function refreshDashboard() {
+    try {
+        const response = await apiCall('/api/dashboard/stats');
+        if (response.success) {
+            updateMetrics(response.stats);
+        }
+    } catch (error) {
+        console.error('Failed to refresh dashboard:', error);
+    }
+}
+
+function updateMetrics(stats) {
+    // Update metric values
+    document.querySelector('.metric-value').textContent = stats.total_bots;
+    // Add more metric updates as needed
+}
+
+async function startBot(botId) {
+    try {
+        const response = await apiCall(`/api/v1/trading/bots/${botId}/start`, {
+            method: 'POST'
+        });
+        
+        if (response.error) {
+            showAlert(response.error, 'danger');
+        } else {
+            showAlert('Bot started successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+    } catch (error) {
+        showAlert('Failed to start bot', 'danger');
+    }
+}
+
+async function stopBot(botId) {
+    try {
+        const response = await apiCall(`/api/v1/trading/bots/${botId}/stop`, {
+            method: 'POST'
+        });
+        
+        if (response.error) {
+            showAlert(response.error, 'danger');
+        } else {
+            showAlert('Bot stopped successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+        }
+    } catch (error) {
+        showAlert('Failed to stop bot', 'danger');
+    }
+}
+
+// Start auto-refresh when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    startAutoRefresh();
+});
+
+// Stop auto-refresh when page unloads
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}

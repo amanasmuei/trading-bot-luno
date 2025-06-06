@@ -1,0 +1,318 @@
+{% extends "saas/base.html" %}
+
+{% block title %}Luno Trading Bot SaaS - Automated Cryptocurrency Trading{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-bg text-white py-5">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Automate Your Cryptocurrency Trading
+                </h1>
+                <p class="lead mb-4">
+                    Professional-grade trading bots powered by advanced algorithms. 
+                    Start trading smarter with our multi-tenant SaaS platform.
+                </p>
+                <div class="d-flex gap-3 mb-4">
+                    <a href="{{ url_for('saas_dashboard.register_page') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Start Free Trial
+                    </a>
+                    <a href="{{ url_for('saas_dashboard.pricing') }}" class="btn btn-outline-light btn-lg">
+                        View Pricing
+                    </a>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h3 class="fw-bold">1000+</h3>
+                        <small>Active Users</small>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="fw-bold">$2M+</h3>
+                        <small>Volume Traded</small>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="fw-bold">99.9%</h3>
+                        <small>Uptime</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="text-center">
+                    <img src="https://via.placeholder.com/500x400/667eea/ffffff?text=Trading+Dashboard" 
+                         alt="Trading Dashboard" class="img-fluid rounded shadow-lg">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Why Choose Our Platform?</h2>
+            <p class="lead text-muted">Everything you need to succeed in cryptocurrency trading</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-robot fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">Advanced Trading Bots</h5>
+                        <p class="card-text">
+                            AI-powered trading algorithms with multiple strategies including RSI, MACD, 
+                            and moving averages for optimal performance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-shield-alt fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">Risk Management</h5>
+                        <p class="card-text">
+                            Built-in stop-loss, take-profit, and position sizing controls to protect 
+                            your capital and maximize returns.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-chart-line fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">Real-time Analytics</h5>
+                        <p class="card-text">
+                            Comprehensive dashboards with live performance metrics, trade history, 
+                            and detailed reporting capabilities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-bell fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">Smart Notifications</h5>
+                        <p class="card-text">
+                            Multi-channel alerts via email, SMS, Discord, and Slack to keep you 
+                            informed of all trading activities.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-code fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">API Access</h5>
+                        <p class="card-text">
+                            RESTful APIs for custom integrations and third-party applications 
+                            with comprehensive documentation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="gradient-bg text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="fas fa-headset fa-lg"></i>
+                        </div>
+                        <h5 class="card-title">24/7 Support</h5>
+                        <p class="card-text">
+                            Dedicated customer support team available around the clock to help 
+                            you succeed with your trading strategies.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Preview -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Simple, Transparent Pricing</h2>
+            <p class="lead text-muted">Choose the plan that fits your trading needs</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            {% for plan in plans[:3] %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 {% if plan.name == 'Premium' %}border-primary{% endif %}">
+                    {% if plan.name == 'Premium' %}
+                    <div class="card-header gradient-bg text-white text-center">
+                        <small>Most Popular</small>
+                    </div>
+                    {% endif %}
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ plan.name }}</h5>
+                        <div class="mb-3">
+                            <span class="display-4 fw-bold">${{ "%.0f"|format(plan.price) }}</span>
+                            <small class="text-muted">/month</small>
+                        </div>
+                        <p class="card-text">{{ plan.description }}</p>
+                        <ul class="list-unstyled">
+                            {% for feature in plan.features[:5] %}
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                {{ feature.description }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('saas_dashboard.register_page') }}" 
+                           class="btn {% if plan.name == 'Premium' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
+                            Get Started
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('saas_dashboard.pricing') }}" class="btn btn-outline-primary">
+                View All Plans & Features
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">What Our Users Say</h2>
+            <p class="lead text-muted">Join thousands of successful traders</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text">
+                            "The platform has completely transformed my trading strategy. 
+                            The automated bots work 24/7 and have significantly improved my returns."
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/50x50/667eea/ffffff?text=JS" 
+                                 alt="User" class="rounded-circle me-3">
+                            <div>
+                                <h6 class="mb-0">John Smith</h6>
+                                <small class="text-muted">Professional Trader</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text">
+                            "Easy to set up and use. The risk management features give me peace of mind 
+                            while the bots handle the trading automatically."
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/50x50/764ba2/ffffff?text=MJ" 
+                                 alt="User" class="rounded-circle me-3">
+                            <div>
+                                <h6 class="mb-0">Maria Johnson</h6>
+                                <small class="text-muted">Crypto Investor</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="card-text">
+                            "The analytics and reporting features are outstanding. I can track 
+                            every aspect of my trading performance in real-time."
+                        </p>
+                        <div class="d-flex align-items-center">
+                            <img src="https://via.placeholder.com/50x50/28a745/ffffff?text=DL" 
+                                 alt="User" class="rounded-circle me-3">
+                            <div>
+                                <h6 class="mb-0">David Lee</h6>
+                                <small class="text-muted">Day Trader</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="gradient-bg text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-4">Ready to Start Trading?</h2>
+        <p class="lead mb-4">
+            Join thousands of traders who trust our platform for automated cryptocurrency trading.
+        </p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('saas_dashboard.register_page') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-rocket me-2"></i>Start Free Trial
+            </a>
+            <a href="{{ url_for('saas_dashboard.documentation') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-book me-2"></i>View Documentation
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
